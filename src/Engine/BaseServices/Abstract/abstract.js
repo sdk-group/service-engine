@@ -46,7 +46,7 @@ class AbstractService {
     return this;
   }
 
-  getEvents(event_group) {
+  getEvents(event_group) { //@TODO: rework it with EventRegistry
     return getEvents(event_group);
   }
   addPermission(name, params) {
@@ -79,9 +79,7 @@ class AbstractService {
   init(config) {
     this.config = config || {};
 
-    if (!this.emitter) {
-      return Promise.reject('U should set channels before');
-    }
+    if (!this.emitter) return Promise.reject('U should set channels before');
 
     this.required_permissions.dropped(() => {
       if (this.state() === 'working') {

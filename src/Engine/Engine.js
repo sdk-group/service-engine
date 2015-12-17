@@ -2,6 +2,9 @@
 
 let _ = require('lodash');
 
+let AbstractService = require('./BaseServices/Abstract');
+let Servicify = require('./BaseServices/Servicify');
+
 let discover = function(path_string) {
   return require(path_string);
 };
@@ -16,8 +19,7 @@ class Engine {
   }
   static createService(path) {
     let ServiceModel = discover(path);
-    let service = new ServiceModel();
-    return service;
+    return (ServiceModel instanceof AbstractService) ? new ServiceModel() : new Servicify(ServiceModel)
   }
   static launch() {
     let init = _.map(this.services, (service, index) => service.init(this.service_params[index]));
