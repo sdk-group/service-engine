@@ -1,11 +1,11 @@
 'use strict'
 
 let _ = require('lodash');
+let queue = require('global-queue');
 
 let Abstract = require('../Abstract/abstract.js');
-let queue = require('global-queue');
 //@FIXIT: not implemented yet
-let EventRegistry = require(_base + '/EventRegistry.js');
+let EventRegistry = require(_base + '/Engine/EventRegistry.js');
 
 const example = {
   module: require('./some_module.js'),
@@ -22,7 +22,12 @@ const example = {
     name: 'example.method.2',
     method: 'exampleMethod2'
   }],
-  events: []
+  events: {
+    group: 'someModuleEvents',
+    shorthands: {
+      'short': 'my.module.event'
+    }
+  }
 };
 
 const FAILURE_MESSAGE = {
@@ -32,6 +37,8 @@ const FAILURE_MESSAGE = {
 
 class Servicify extends Abstract {
   constructor(config) {
+    EventsRegistry.addGroup(config.events);
+
     let Model = config.module;
     this.module = new Model();
 
@@ -46,7 +53,6 @@ class Servicify extends Abstract {
       let method = this.module[task.method].bind(this.module);
       queue.listenTask(task.name, (data) => this.isWorking() ? method(data) : FAILURE_MESSAGE);
     });
-
   }
   init(config) {
     super.init(config);

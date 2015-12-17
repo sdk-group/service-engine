@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sdk-group/iris-v2"
+    "url": "https://github.com/sdk-group/service-engine/"
   },
   "keywords": [
     "IRIS"
@@ -19,9 +19,9 @@
   "author": "SS",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sdk-group/iris-v2/issues"
+    "url": "https://github.com/sdk-group/service-engine/issues"
   },
-  "homepage": "https://github.com/sdk-group/iris-v2",
+  "homepage": "https://github.com/sdk-group/service-engine/",
   "dependencies": {
     "Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
     "bluebird": "^2.9.24",

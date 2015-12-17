@@ -14,6 +14,6 @@ Auth.configure({
 
 let config = require('./local-service-config.js');
 
-let Engine = require('./Engine.js');
+let Engine = require('./Engine/Engine.js');
 Engine.config = config;
 Engine.launch();
