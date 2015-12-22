@@ -8,7 +8,7 @@ queue.addAdapter('ipc', process);
 
 
 boot(queue).then(() => {
-	let getEvents = require(_base + '/build/Model/Events/events.js');
+	let getEvents = require(_base + '/Engine/Model/Events/events.js');
 	let ChildServiceGroup = require('./child-service-group.js');
 
 	let event_names = getEvents('child_process');

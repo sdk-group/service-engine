@@ -2,7 +2,7 @@
 
 let Abstract = require('../Abstract/abstract.js');
 let _ = require("lodash");
-let Error = require(_base + "/build/Model/Error/Lapsus")("BrokerError");
+let Error = require(_base + "/Engine/Model/Error/Lapsus")("BrokerError");
 
 class Broker extends Abstract {
 	constructor() {

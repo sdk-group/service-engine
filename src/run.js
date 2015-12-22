@@ -9,7 +9,7 @@ let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
 
 let Queue = require('custom-queue');
 
-let loader = require(_base + '/build/config/loader')(config.buckets.main);
+let loader = require(_base + '/config/loader')(config.buckets.main);
 
 Auth.configure({
 	data: config.buckets.main,
@@ -80,7 +80,7 @@ Auth.configure({
       "path": "Facehugger",
       "params": {
         "mt_models": [
-          "/Model/MetaTree"
+          "/Engine/Model/MetaTree"
         ]
       }
     },

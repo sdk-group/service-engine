@@ -2,9 +2,9 @@
 
 let Abstract = require('../Abstract/abstract.js');
 let _ = require("lodash");
-let Error = require(_base + "/build/Model/Error/Lapsus")("BookerError");
+let Error = require(_base + "/Engine/Model/Error/Lapsus")("BookerError");
 let Promise = require("bluebird");
-let constellation = require(_base + '/build/config/Constellation');
+let constellation = require(_base + '/config/Constellation');
 
 class Booker extends Abstract {
 	constructor() {

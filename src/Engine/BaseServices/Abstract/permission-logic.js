@@ -1,7 +1,7 @@
 'use strict'
 let Promise = require('bluebird');
 let _ = require('lodash');
-let getEvents = require(_base + '/build/Model/Events/events.js');
+let getEvents = require(_base + '/Engine/Model/Events/events.js');
 
 let modules = [];
 
@@ -11,7 +11,7 @@ let getPermissionModel = function(module_name) {
     return modules[module_name];
   }
 
-  modules[module_name] = require(_base + '/build/Model/Permission/' + /*_.capitalize*/ (module_name) + '.js');
+  modules[module_name] = require(_base + '/Engine/Model/Permission/' + /*_.capitalize*/ (module_name) + '.js');
 
   return modules[module_name];
 }

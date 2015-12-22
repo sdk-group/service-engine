@@ -1,6 +1,6 @@
 'use strict'
 
-let MainServiceGroup = require(_base + '/build/ServiceGroup/main-service-group');
+let MainServiceGroup = require(_base + '/ServiceGroup/main-service-group');
 
 class ChildServiceGroup extends MainServiceGroup {
 	constructor(config) {

@@ -10,7 +10,7 @@ let EventRegistry = require('./Engine/EventRegistry.js');
 
 let event_list = require('./Engine/Model/Events/event-list.js');
 
-let loader = require(_base + '/build/config/loader')(config.buckets.main);
+let loader = require(_base + '/config/loader')(config.buckets.main);
 
 EventRegistry.init(event_list);
 Auth.configure({
@@ -18,8 +18,8 @@ Auth.configure({
   session: config.buckets.auth
 });
 
-let config = require('./local-service-config.js');
+let service_config = require('./local-service-config.js');
 
 let Engine = require('./Engine/Engine.js');
-Engine.config = config;
+Engine.config = service_config;
 Engine.launch();

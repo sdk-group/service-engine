@@ -5,8 +5,8 @@ let qs = require("querystring");
 let request = Promise.promisify(require("request"));
 
 let Abstract = require('../Abstract/abstract.js');
-let Error = require(_base + "/build/Model/Error/Lapsus")("ReplicatorError");
-let constellation = require(_base + '/build/config/Constellation');
+let Error = require(_base + "/Engine/Model/Error/Lapsus")("ReplicatorError");
+let constellation = require(_base + '/config/Constellation');
 
 //UTILITY
 
