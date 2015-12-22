@@ -2,7 +2,7 @@
 
 let events = {};
 
-class EventsRegistry {
+class EventRegistry {
   constructor() {
     throw new Error('singletone');
   }
@@ -20,4 +20,4 @@ class EventsRegistry {
   }
 }
 
-module.exports = EventsRegistry;
+module.exports = EventRegistry;

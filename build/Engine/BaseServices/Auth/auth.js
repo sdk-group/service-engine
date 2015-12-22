@@ -10,10 +10,9 @@ class Auth extends Abstract {
     super({
       event_group: 'doctor'
     });
-
-    this.list = new PermissionList();
   }
   setChannels(options) {
+    this.list = new PermissionList();
     super.setChannels(options);
 
     this.list.setChannels(options);

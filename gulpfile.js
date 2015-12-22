@@ -25,6 +25,7 @@ gulp.task("sourcemaps", function() {
 
 gulp.task("es6-js", function() {
 	return gulp.src(["src/**/*.js", "tests/**/*.js"])
+		.pipe(changed("build"))
 		.pipe(plumber({
 			errorHandler: function(e) {
 				console.log('error', e);
