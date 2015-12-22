@@ -41,7 +41,7 @@ let config = {
 			"params": {}
 		},
 		"replicator": {
-			"path": "./BaseServices/Replicator",
+			"path": "iris-service-replicator",
 			"params": {}
 		}
 	},
