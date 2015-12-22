@@ -3,7 +3,8 @@
 let Promise = require('bluebird');
 let _ = require('lodash');
 
-let getEvents = require(_base + '/Model/Events/events.js');
+let EventRegistry = require(_base + '/Engine/EventRegistry.js');
+
 let PermissionLogic = require('./permission-logic.js');
 let queue = require('global-queue');
 
@@ -46,8 +47,8 @@ class AbstractService {
     return this;
   }
 
-  getEvents(event_group) { //@TODO: rework it with EventRegistry
-    return getEvents(event_group);
+  getEvents(event_group) {
+    return EventRegistry.getEvents(event_group);
   }
   addPermission(name, params) {
     this.required_permissions.add(name, params);
@@ -105,7 +106,6 @@ class AbstractService {
     //@TODO: What should it do in current context?
     //@TODO: requestPermissions() here
     if (this.state() === 'working') throw new Error('Running already!');
-    this.paused = false;
 
     this.state('working');
 
@@ -115,7 +115,6 @@ class AbstractService {
   pause() {
     //@TODO: What should it do in current context?
     this.state('paused');
-    this.paused = true;
 
     return this;
   }
@@ -124,9 +123,11 @@ class AbstractService {
     //@TODO: What should it do in current context?
     //this.state('waiting');
     //set waiting, call permissions, get
-    this.paused = false;
 
     return this;
+  }
+  get paused() {
+    return !this.isWorking();
   }
   isWorking() {
     return this.state === 'working';

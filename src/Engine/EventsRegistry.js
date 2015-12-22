@@ -6,6 +6,9 @@ class EventsRegistry {
   constructor() {
     throw new Error('singletone');
   }
+  static init(init_events) {
+    events = init_events;
+  }
   static addGroup(events) {
     events[events.group] = events.shorthands;
   }
