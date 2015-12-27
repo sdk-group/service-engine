@@ -22,6 +22,10 @@ class AbstractService {
 		this.required_permissions = new PermissionLogic();
 		this.setChannels(queue).state('created');
 	}
+	getName() {
+		return this.constructor.name;
+	}
+
 	state(name) {
 		if (!name) return this.state_id;
 
@@ -58,13 +62,13 @@ class AbstractService {
 			this.state('waiting');
 
 			if (result === true) {
-				console.log('Abstract: can start now');
+				console.log('%s: can start now', this.getName());
 				this.start();
 			} else {
-				console.log('Abstract: some permissions dropped, start is delayed');
+				console.log('%s: some permissions dropped, start is delayed', this.getName());
 			}
 		}).catch(() => {
-			console.log('Could not get permissions for service,everything is really bad');
+			console.log('%s: Could not get permissions for service, everything is really bad', this.getName());
 		});
 	}
 
@@ -77,11 +81,11 @@ class AbstractService {
 	init(config) {
 		this.config = config || {};
 
-		if (!this.emitter) return Promise.reject('U should set channels before');
+		if (!this.emitter) return Promise.reject('%s: U should set channels before', this.getName());
 
 		this.required_permissions.dropped(() => {
 			if (this.state() === 'working') {
-				console.log('Abstract : oh no, so bad');
+				console.log('%s: oh no, so bad', this.getName());
 				this.pause();
 				this.state('waiting');
 			}
@@ -90,7 +94,7 @@ class AbstractService {
 		this.required_permissions.restored(() => {
 			if (this.state() === 'waiting') {
 				this.start();
-				console.log('Abstract : excellent...');
+				console.log('%s: excellent...', this.getName());
 			}
 		});
 

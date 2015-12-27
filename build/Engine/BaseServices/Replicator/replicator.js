@@ -3,9 +3,7 @@ let Promise = require('bluebird');
 let _ = require("lodash");
 let qs = require("querystring");
 let request = Promise.promisify(require("request"));
-
-let Abstract = require('../Abstract/abstract.js');
-let Error = require(_base + "/Engine/Model/Error/Lapsus")("ReplicatorError");
+let emitter = require("global-queue");
 let constellation = require(_base + '/config/Constellation');
 
 //UTILITY
@@ -158,59 +156,14 @@ let mutualMethod = function (method, _ref) {
 
 //REPLICATOR
 
-class Replicator extends Abstract {
+class Replicator {
 	constructor() {
-		super({
-			event_group: 'replication'
-		});
-
 		this.rids = {};
 		this.refs = {};
-		this.errname = Error.name;
+		this.emitter = emitter;
 	}
 
 	init(config) {
-		super.init(config);
-
-		let events = this.event_names;
-		let ways = {
-			one: 'direct',
-			two: 'bidirect'
-		};
-		let tasks = [{
-			name: events.create(ways.one),
-			handler: this.createOnewayReplication
-		}, {
-			name: events.create(ways.two),
-			handler: this.createTwowayReplication
-		}, {
-			name: events.remove(ways.one),
-			handler: this.removeOnewayReplication
-		}, {
-			name: events.remove(ways.two),
-			handler: this.removeTwowayReplication
-		}, {
-			name: events.pause(ways.one),
-			handler: this.pauseOnewayReplication
-		}, {
-			name: events.pause(ways.two),
-			handler: this.pauseTwowayReplication
-		}, {
-			name: events.resume(ways.one),
-			handler: this.resumeOnewayReplication
-		}, {
-			name: events.resume(ways.two),
-			handler: this.resumeTwowayReplication
-		}, {
-			name: events.settings,
-			handler: this.settings
-		}, {
-			name: events.stats,
-			handler: this.getReplicationState
-		}];
-		_.forEach(tasks, task => {
-			this.emitter.listenTask(task.name, data => _.bind(task.handler, this)(data));
-		});
 		this.hosts = constellation;
 		let promises = [];
 		this.hosts.forEach((val, key) => {
@@ -232,30 +185,8 @@ class Replicator extends Abstract {
 		});
 
 		return Promise.all(promises).then(res => {
-			console.log("RES INIT", res);
 			return Promise.resolve(true);
 		});
-	}
-
-	start() {
-		super.start();
-		console.log("Replicator: started");
-
-		return this;
-	}
-
-	pause() {
-		super.pause();
-		console.log("Replicator: paused");
-
-		return this;
-	}
-
-	resume() {
-		super.resume();
-		console.log("Replicator: resumed");
-
-		return this;
 	}
 
 	//API
@@ -301,7 +232,7 @@ class Replicator extends Abstract {
 		let src = this.hosts.show(shost);
 		let dst = this.hosts.show(dhost);
 		if (!src) {
-			return Promise.reject(new Error("MISCONFIGURATION", "Configure source host before you ask it for anything, dammit."));
+			return Promise.reject(new Error("Configure source host before you ask it for anything, dammit."));
 		}
 		//        if (!src.active || !dst.active) {
 		//            return Promise.reject(new Error("SERVICE_ERROR", "At least one of provided hosts is unreachable."));
@@ -316,7 +247,7 @@ class Replicator extends Abstract {
 				return Promise.resolve(response);
 			});
 		}).catch(err => {
-			return Promise.reject(new Error("SERVICE_ERROR", "Request failed."));
+			return Promise.reject(new Error("Request failed."));
 		});
 	}
 
@@ -330,7 +261,7 @@ class Replicator extends Abstract {
 		let src = this.hosts.show(shost);
 		let dst = this.hosts.show(dhost);
 		if (!src) {
-			return Promise.reject(new Error("MISCONFIGURATION", "Configure source host before you ask it for anything, dammit."));
+			return Promise.reject(new Error("Configure source host before you ask it for anything, dammit."));
 		}
 		//        if (!src.active || !dst.active) {
 		//            return Promise.reject(new Error("SERVICE_ERROR", "At least one of provided hosts is unreachable."));
@@ -348,7 +279,7 @@ class Replicator extends Abstract {
 				return Promise.resolve(response);
 			});
 		}).catch(err => {
-			return Promise.reject(new Error("SERVICE_ERROR", "Request failed."));
+			return Promise.reject(new Error("Request failed."));
 		});
 	}
 
@@ -361,10 +292,10 @@ class Replicator extends Abstract {
 		let src = this.hosts.show(shost);
 		let dst = this.hosts.show(dhost);
 		if (!src) {
-			return Promise.reject(new Error("MISCONFIGURATION", "Configure source host before you ask it for anything, dammit."));
+			return Promise.reject(new Error("Configure source host before you ask it for anything, dammit."));
 		}
 		if (!src.active || !dst.active) {
-			return Promise.reject(new Error("SERVICE_ERROR", "At least one of provided hosts is unreachable."));
+			return Promise.reject(new Error("At least one of provided hosts is unreachable."));
 		}
 
 		return createReplication(src.ip, sb, dhost, db, src.usr, src.pwd).then(res => {
@@ -372,7 +303,7 @@ class Replicator extends Abstract {
 			if (!response.errors) this.rids[[src.ip, sb, dst.ip, db].join(":")] = response.id;
 			return Promise.resolve(response);
 		}).catch(err => {
-			return Promise.reject(new Error("SERVICE_ERROR", "Request failed."));
+			return Promise.reject(new Error("Request failed."));
 		});
 	}
 
@@ -385,10 +316,10 @@ class Replicator extends Abstract {
 		let src = this.hosts.show(shost);
 		let dst = this.hosts.show(dhost);
 		if (!src) {
-			return Promise.reject(new Error("MISCONFIGURATION", "Configure source host before you ask it for anything, dammit."));
+			return Promise.reject(new Error("Configure source host before you ask it for anything, dammit."));
 		}
 		if (!src.active || !dst.active) {
-			return Promise.reject(new Error("SERVICE_ERROR", "At least one of provided hosts is unreachable."));
+			return Promise.reject(new Error("At least one of provided hosts is unreachable."));
 		}
 
 		let key = [src.ip, sb, dst.ip, db].join(":");
@@ -400,7 +331,7 @@ class Replicator extends Abstract {
 				delete this.rids[key];
 				return Promise.resolve(response);
 			}).catch(err => {
-				return Promise.reject(new Error("SERVICE_ERROR", "Request failed."));
+				return Promise.reject(new Error("Request failed."));
 			});
 		});
 	}

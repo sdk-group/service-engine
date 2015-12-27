@@ -75,7 +75,7 @@ gulp.task('start-test', function() {
 
 gulp.task('start-serve', function() {
 	demon = nodemon({
-		script: 'build/index.js',
+		script: 'build/index.sample.js',
 		watch: ['build/'],
 		execMap: {
 			"js": "node  --harmony --harmony_proxies"

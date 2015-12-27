@@ -16,7 +16,6 @@ let config = {
 			path: "./BaseServices/MessageHub",
 			params: {
 				"default_options": {
-					"hell": "bell",
 					"websocket": {
 						"port": 3001
 					}
@@ -25,7 +24,7 @@ let config = {
 					"websocket1": {
 						"model": "websocket",
 						"options": {
-							"port": 3000
+							"port": 333
 						}
 					}
 				}
@@ -43,7 +42,7 @@ let config = {
 			"params": {}
 		},
 		"replicator": {
-			"path": "./BaseServices/Replicator",
+			"path": "iris-service-replicator",
 			"params": {}
 		}
 	},

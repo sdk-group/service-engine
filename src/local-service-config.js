@@ -14,7 +14,6 @@ let config = {
 			path: "./BaseServices/MessageHub",
 			params: {
 				"default_options": {
-					"hell": "bell",
 					"websocket": {
 						"port": 3001
 					}
@@ -23,7 +22,7 @@ let config = {
 					"websocket1": {
 						"model": "websocket",
 						"options": {
-							"port": 3000
+							"port": 333
 						}
 					}
 				}

@@ -22,9 +22,12 @@ class WebsocketConnector extends AbstractConnector {
 		});
 		this.on_connection(socket => {
 			console.log("CONNECTION TO WS");
-			return Promise.resolve({
-				value: true,
-				reason: 'Too much noise'
+			return new Promise((resolve, reject) => {
+				socket.on();
+				return resolve({
+					value: true,
+					reason: 'Too much noise'
+				});
 			});
 		});
 		this.on_disconnect(() => {
@@ -40,8 +43,14 @@ class WebsocketConnector extends AbstractConnector {
 			this.io.of(uri).on('connection', socket => {
 				this._on_connection(socket).then(valid => {
 					if (valid.value === true) {
-						socket.emit('auth', true);
 						socket.on('message', data => {
+							if (data.uri == 'ws://subscribe') {
+								let rooms = _.isArray(data.data.room) ? data.data.room : [data.data.room];
+								_.map(rooms, room => {
+									socket.join(room);
+									socket.emit('room-message', `Now joined ${ room }`);
+								});
+							}
 							data.destination = uri;
 							this._on_message(data).then(response => {
 								socket.emit('message', response);

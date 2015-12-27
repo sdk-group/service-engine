@@ -37,6 +37,7 @@ const FAILURE_MESSAGE = {
 
 class Servicify extends Abstract {
 	constructor(config) {
+		super({});
 		EventRegistry.addGroup(config.events);
 
 		let Model = config.module;
@@ -47,12 +48,16 @@ class Servicify extends Abstract {
 		});
 
 		_.forEach(config.tasks, task => {
-			if (!(this.module[task.method] instanceof Function)) throw new Error('no such method');
+			if (!(this.module[task.handler] instanceof Function)) throw new Error('no such method');
 
-			let method = this.module[task.method].bind(this.module);
+			let method = this.module[task.handler].bind(this.module);
 			queue.listenTask(task.name, data => this.isWorking() ? method(data) : FAILURE_MESSAGE);
 		});
 	}
+	getName() {
+		return `${ this.constructor.name } of ${ this.module.constructor.name }`;
+	}
+
 	init(config) {
 		super.init(config);
 		if (this.module.init) this.module.init(config);
