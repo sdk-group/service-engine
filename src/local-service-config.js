@@ -17,12 +17,40 @@ let config = {
 					"websocket": {
 						"port": 3001
 					}
+					, "http": {
+						"port": 80
+					}
+					, "https": {
+						"port": 443
+					}
 				},
 				"connectors": {
 					"websocket1": {
 						"model": "websocket",
 						"options": {
 							"port": 333
+						}
+					}
+					, "http1": {
+						"model": "http",
+						"options": {
+							"port": 80,
+							"routes": {
+								"post" : {
+									"/iris_mo/equeue_ui/xmlrpc.php": "./xmlrpcv1"
+								}
+							}
+						}
+					}
+					, "http2": {
+						"model": "http",
+						"options": {
+							"port": 9090,
+							"routes": {
+								"post" : {
+									"/": "./xmlrpcv1"
+								}
+							}
 						}
 					}
 				}
