@@ -109,6 +109,10 @@ loader.load({
   SG: "iris://config#service_groups"
 }).then(() => {
   let Engine = require('./Engine/Engine.js');
+  let EventRegistry = require('./Engine//EventRegistry.js');
+  let event_list = require('./Engine/Model/Events/event-list.js');
+  EventRegistry.init(event_list);
+
   Engine.config = loader.SG;
   Engine.launch().then(() => {
     console.log('All groups started!');
