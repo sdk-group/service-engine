@@ -7,7 +7,7 @@ let config = require('./config/db_config.json');
 let Auth = require('./Auth');
 let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
 
-let Queue = require('custom-queue');
+let Queue = require('global-queue');
 
 let loader = require(_base + '/config/loader')(config.buckets.main);
 
