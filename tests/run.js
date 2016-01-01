@@ -12,8 +12,8 @@ let Queue = require('global-queue');
 let loader = require(_base + '/config/loader')(config.buckets.main);
 
 Auth.configure({
-	data: config.buckets.main,
-	session: config.buckets.auth
+  data: config.buckets.main,
+  session: config.buckets.auth
 });
 
 /*
@@ -107,22 +107,20 @@ Auth.configure({
 
 
 loader.load({
-		SG: "iris://config#service_groups"
-	})
-	.then(() => {
-		let queue = new Queue();
-		let MainServiceGroup = require('./ServiceGroup/main-service-group');
-		let mainSG = new MainServiceGroup(loader.SG.main_group);
-		mainSG.setChannels(queue);
-		mainSG.launch().then(() => {
-			console.log('All groups started!');
+    SG: "iris://config#service_groups"
+  })
+  .then(() => {
+    let Engine = require('./Engine/Engine.js');
+    Engine.config = loader.SG.main_group;
+    Engine.launch().then(() => {
+      console.log('All groups started!');
 
-			var gulp = require("gulp");
-			var mocha = require('gulp-mocha');
+      var gulp = require("gulp");
+      var mocha = require('gulp-mocha');
 
-			gulp.src('build/**/*.test.js', {
-					read: false
-				})
-				.pipe(mocha());
-		});
-	});
+      gulp.src('build/**/*.test.js', {
+          read: false
+        })
+        .pipe(mocha());
+    });
+  });
