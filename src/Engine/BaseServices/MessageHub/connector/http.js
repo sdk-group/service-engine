@@ -59,6 +59,9 @@ class HttpConnector extends AbstractConnector {
 		this.io.on('request', (req, res) => {
 			self.router(req, res, finalhandler(req, res));
 		});
+		this.io.on('error', (err) => {
+			console.log('HTTP error:', err);
+		});
 //		_.map(this.routes, (uri) => {
 //			this.io.on('connection', (socket) => {
 //				this._on_connection(socket)
