@@ -67,8 +67,10 @@ class AbstractService {
 			} else {
 				console.log('%s: some permissions dropped, start is delayed', this.getName());
 			}
+			return result;
 		}).catch(() => {
 			console.log('%s: Could not get permissions for service, everything is really bad', this.getName());
+			return false;
 		});
 	}
 
@@ -107,7 +109,6 @@ class AbstractService {
 		//@TODO: What should it do in current context?
 		//@TODO: requestPermissions() here
 		if (this.state() === 'working') throw new Error('Running already!');
-
 		this.state('working');
 
 		return this;
@@ -131,7 +132,7 @@ class AbstractService {
 		return !this.isWorking();
 	}
 	isWorking() {
-		return this.state === 'working';
+		return this.state() === 'working';
 	}
 }
 

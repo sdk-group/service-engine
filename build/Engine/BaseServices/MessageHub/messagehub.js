@@ -2,6 +2,7 @@
 
 let Abstract = require('../Abstract/abstract.js');
 let ConnectorHolder = require("./connector/holder");
+let auth = require(_base + '/Auth');
 
 class MessageHub extends Abstract {
 	constructor() {
@@ -12,11 +13,40 @@ class MessageHub extends Abstract {
 		this.connectors = new ConnectorHolder(options.default_options);
 		this.connectors.addMulti(options.connectors);
 		this.connectors.listen();
+		this.connectors.on_login(_ref => {
+			let user = _ref.username;
+			let pass = _ref.password_hash;
+			let origin = _ref.origin;
+
+			console.log("USERPASS", user, pass, origin);
+			//@TODO: check auth here: userpass
+			return auth.authorize({
+				user: user,
+				password_hash: pass,
+				address: origin
+			}).catch(err => {
+				return {
+					value: false,
+					reason: "Internal error."
+				};
+			});
+		});
 		this.connectors.on_message(data => {
 			console.log("DATA", data);
 			//check auth here: data.token
 			//then route
-			return this.emitter.addTask(data.destination, data.data);
+			let token = data.token;
+			return auth.check({
+				token: token
+			}).then(result => {
+				if (result.value == true) {
+					//result.data is user session
+					//@TODO: check permissions here
+					return this.emitter.addTask(data.destination, data.data);
+				} else {
+					return result;
+				}
+			});
 		});
 	}
 	start() {

@@ -51,7 +51,9 @@ class Servicify extends Abstract {
 			if (!(this.module[task.handler] instanceof Function)) throw new Error('no such method');
 
 			let method = this.module[task.handler].bind(this.module);
-			queue.listenTask(task.name, data => this.isWorking() ? method(data) : FAILURE_MESSAGE);
+			queue.listenTask(task.name, data => {
+				return this.isWorking() ? method(data) : FAILURE_MESSAGE;
+			});
 		});
 	}
 	getName() {
@@ -59,8 +61,9 @@ class Servicify extends Abstract {
 	}
 
 	init(config) {
-		super.init(config);
-		if (this.module.init) this.module.init(config);
+		return super.init(config).then(res => {
+			return _.isFunction(this.module.init) ? this.module.init(config) : res;
+		});
 	}
 }
 
