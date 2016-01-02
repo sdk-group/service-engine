@@ -1,7 +1,7 @@
 let auth = require("./index");
 let RDFcb = require("cbird-rdf").LD;
 let Couchbird = require("Couchbird");
-let cfg = require(_base + '/build/config/db_config.json');
+let cfg = require(_base + '/config/db_config.json');
 
 describe("Auth", () => {
 

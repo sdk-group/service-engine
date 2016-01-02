@@ -3,7 +3,7 @@
 let auth = require("./index");
 let RDFcb = require("cbird-rdf").LD;
 let Couchbird = require("Couchbird");
-let cfg = require(_base + '/build/config/db_config.json');
+let cfg = require(_base + '/config/db_config.json');
 
 describe("Auth", () => {
 
@@ -15,7 +15,7 @@ describe("Auth", () => {
 
 	let user_data = [{
 		"@id": "iris://data#human-2",
-		"@type": ["iris://vocabulary/domain#Person"],
+		"@type": ["iris://vocabulary/domain#Employee"],
 		"iris://vocabulary/domain#firstName": [{
 			"@language": "en",
 			"@value": "Maria"
@@ -43,7 +43,7 @@ describe("Auth", () => {
 		}]
 	}, {
 		"@id": "iris://data#human-1",
-		"@type": ["iris://vocabulary/domain#Person"],
+		"@type": ["iris://vocabulary/domain#Employee"],
 		"iris://vocabulary/domain#firstName": [{
 			"@language": "en",
 			"@value": "Vasily"

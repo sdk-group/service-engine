@@ -13,12 +13,10 @@ class MessageHub extends Abstract {
 		this.connectors.addMulti(options.connectors);
 		this.connectors.listen();
 		this.connectors.on_message((data) => {
-			return Promise.delay(data.to).then(() => {
-				console.log("DATA", data);
-				//check auth here: data.token
-				//then route
-				return this.emitter.addTask(data.destination, data.data);
-			});
+			console.log("DATA", data);
+			//check auth here: data.token
+			//then route
+			return this.emitter.addTask(data.destination, data.data);
 		});
 	}
 	start() {

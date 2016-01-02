@@ -7,7 +7,7 @@ let config = require('./config/db_config.json');
 let Auth = require('./Auth');
 let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
 
-let Queue = require('custom-queue');
+let Queue = require('global-queue');
 
 let loader = require(_base + '/config/loader')(config.buckets.main);
 
@@ -110,11 +110,13 @@ loader.load({
 		SG: "iris://config#service_groups"
 	})
 	.then(() => {
-		let queue = new Queue();
-		let MainServiceGroup = require('./ServiceGroup/main-service-group');
-		let mainSG = new MainServiceGroup(loader.SG.main_group);
-		mainSG.setChannels(queue);
-		mainSG.launch().then(() => {
+		let Engine = require('./Engine/Engine.js');
+		let EventRegistry = require('./Engine//EventRegistry.js');
+		let event_list = require('./Engine/Model/Events/event-list.js');
+		EventRegistry.init(event_list);
+
+		Engine.config = loader.SG;
+		Engine.launch().then(() => {
 			console.log('All groups started!');
 
 			var gulp = require("gulp");

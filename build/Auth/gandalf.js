@@ -17,7 +17,7 @@ let prop_mapping = {
 	login: "iris://vocabulary/domain#login",
 	password: "iris://vocabulary/domain#password",
 	types: {
-		'iris://vocabulary/domain#Person': 'user',
+		'iris://vocabulary/domain#Employee': 'user',
 		'iris://vocabulary/domain#AWP': 'device',
 		'iris://vocabulary/domain#Terminal': 'device'
 	}
