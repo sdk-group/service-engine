@@ -20,14 +20,19 @@ class HttpConnector extends AbstractConnector {
 		for (let method in this.routes) {
 			let route = this.routes[method];
 			for (let path in route) {
-				let Handler = require(route[path]);
-				let handler = new Handler;
-				handler.create({
-					httpServer: this.io,
-					connector: this
-				});
-				let httpHandler = handler.getHttpHandler();
-				this.router[method](path, httpHandler);
+				try {
+					let Handler = require(route[path]);
+					let handler = new Handler;
+					handler.create({
+						httpServer: this.io,
+						connector: this
+					});
+					let httpHandler = handler.getHttpHandler();
+					this.router[method](path, httpHandler);
+				} catch(ex) {
+					console.error(ex);
+					console.error(ex.stack);
+				}
 			}
 		}
 
@@ -85,6 +90,7 @@ class HttpConnector extends AbstractConnector {
 //			});
 //		});
 		this.io.listen(this.port);
+		console.log('HTTP: listen to port', this.port);
 	}
 
 	close() {
