@@ -1,7 +1,12 @@
 /**
+ * Модуль работы с URL
+ */
+let url = require( "url" );
+/**
  * Модуль работы с XML-RPC
  */
 let xmlrpc = require('xmlrpc');
+
 
 /**
  * Клиент XML-RPC для доступа к ЭО.
@@ -19,15 +24,6 @@ function initXMLRPCClient() {
 			}
 		}
 	};
-	/**
-	 * Модуль работы с URL
-	 */
-	var url = require( "url" );
-	/**
-	 * Модуль работы с XML-RPC
-	 */
-	var xmlrpc = require('xmlrpc');
-
 	var parseUrl = function( wpUrl ) {
 			var urlParts, secure;
 
@@ -41,7 +37,7 @@ function initXMLRPCClient() {
 			return {
 					host: urlParts.hostname,
 					port: urlParts.port || (secure ? 443 : 80),
-					path: urlParts.path.replace( /\/+$/, "" ) + "/xmlrpc.php",
+					path: urlParts.path.replace( /\/+$/, "" ),// + "/xmlrpc.php",
 					secure: secure
 			};
 	};

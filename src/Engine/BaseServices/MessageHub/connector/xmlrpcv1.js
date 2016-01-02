@@ -22,7 +22,7 @@ class XmlRpcApiV1 {
 		this.connector = options.connector;
 
 		let that = this;
-		server.on(anyMethodName, (err, params, callback) => {
+		this.server.on(anyMethodName, (err, params, callback) => {
 			let methodName = params.splice(0, 1)[0];
 			if (err) {
 				console.error('Method call for \'%s\' failed: %s', methodName, err);
@@ -32,7 +32,7 @@ class XmlRpcApiV1 {
 			that.handleRequest(methodName, params, callback);
 		});
 		
-		server.on('error', (e) => {
+		this.server.on('error', (e) => {
 			if (e.code === 'EADDRINUSE') {
 				console.error('Address in use');
 			}
