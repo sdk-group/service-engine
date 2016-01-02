@@ -29,6 +29,7 @@
     "finalhandler": "^0.4.1",
     "global-queue": "git+https://github.com/artificial-life/global-queue",
     "iris-service-replicator": "git+https://github.com/sdk-group/iris-service-replicator.git",
+    "iris-service-xmlrpc-v1": "git+https://github.com/olegabr/iris-service-xmlrpc-v1.git",
     "jsonwebtoken": "^5.4.1",
     "lodash": "^3.7.0",
     "make-error": "^1.0.2",

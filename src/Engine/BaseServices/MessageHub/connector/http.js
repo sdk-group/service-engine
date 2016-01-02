@@ -14,18 +14,22 @@ class HttpConnector extends AbstractConnector {
 		this.port = options.port;
 		this.routes = options.routes || {/* empty by default */};
 
+		this.io = http.createServer();
+
 		this.router = Router();
 		for (let method in this.routes) {
 			let route = this.routes[method];
 			for (let path in route) {
 				let Handler = require(route[path]);
 				let handler = new Handler;
+				handler.create({
+					httpServer: this.io,
+					connector: this
+				});
 				let httpHandler = handler.getHttpHandler();
 				this.router[method](path, httpHandler);
 			}
 		}
-
-		this.io = http.createServer();
 
 		this.on_message((data) => {
 			console.log("HTTP received: ", data);
@@ -92,6 +96,19 @@ class HttpConnector extends AbstractConnector {
 	on_message(resolver) {
 		if(_.isFunction(resolver))
 			this._on_message = resolver;
+	}
+	
+	/**
+	 * @param data Сообщение формата:
+	 * {
+	 *	destination: event_name,
+	 *  data: method_params,
+	 *  token: token_string
+	 * }
+	 * @return {Promise} Обещание обработки сообщения
+	 */
+	sendMessage(data) {
+		return this._on_message(data);
 	}
 
 	on_login(callback) {}

@@ -70,6 +70,10 @@ let config = {
 		"replicator": {
 			"path": "iris-service-replicator",
 			"params": {}
+		},
+		"xmlrpc-v1": {
+			"path": "iris-service-xmlrpc-v1",
+			"params": {}
 		}
 	},
 	"spawn_limit": 10

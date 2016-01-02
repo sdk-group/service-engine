@@ -1,5 +1,5 @@
 'use strict'
-let Queue = require('custom-queue');
+let Queue = require('global-queue');
 let boot = require('./boot.js');
 
 let queue = new Queue();

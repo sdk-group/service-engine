@@ -19,13 +19,10 @@ class XmlRpcApiV1 {
 			httpServer: options.httpServer,
 			anyMethodName: anyMethodName
 		});
-		// Handle methods not found
-		server.on('NotFound', function(method, params) {
-			console.error('Method ' + method + ' does not exist');
-		});
+		this.connector = options.connector;
 
 		let that = this;
-		server.on(anyMethodName, function (err, params, callback) {
+		server.on(anyMethodName, (err, params, callback) => {
 			let methodName = params.splice(0, 1)[0];
 			if (err) {
 				console.error('Method call for \'%s\' failed: %s', methodName, err);
@@ -35,7 +32,7 @@ class XmlRpcApiV1 {
 			that.handleRequest(methodName, params, callback);
 		});
 		
-		server.on('error', function (e) {
+		server.on('error', (e) => {
 			if (e.code === 'EADDRINUSE') {
 				console.error('Address in use');
 			}
@@ -45,8 +42,19 @@ class XmlRpcApiV1 {
 	}
 	
 	handleRequest(methodName, params, callback) {
-		// TODO: Здесь надо упаковать это дело в событие для MessageHub,
-		// отправить его и в промисе дождаться результата и вызвать для него callback(error, result)
+		// упаковать это дело в событие для MessageHub,
+		// отправить его и в промисе дождаться результата и
+		// вызвать для него callback(error, result)
+		let data = {
+			destination: "xmlrpc.v1." + methodName,
+			data: params,
+			// TODO: в куке PHPSESSION пробрасывать 32-битный токен авторизации
+			// чтобы для клиентов это выглядело как раньше
+			token: ""
+		};
+		this.connector.sendMessage(data).then((result) => {
+			callback(result.error, result.result);
+		});
 	}
 	
 	getHttpHandler() {
