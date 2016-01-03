@@ -18,13 +18,41 @@ let config = {
 				"default_options": {
 					"websocket": {
 						"port": 3001
+					},
+					"http": {
+						"port": 8080
+					},
+					"https": {
+						"port": 443
 					}
 				},
 				"connectors": {
 					"websocket1": {
 						"model": "websocket",
 						"options": {
-							"port": 333
+							"port": 3001
+						}
+					},
+					"http1": {
+						"model": "http",
+						"options": {
+							"port": 8080,
+							"routes": {
+								"post": {
+									"/iris_mo/equeue_ui/xmlrpc.php": "./xmlrpcv1"
+								}
+							}
+						}
+					},
+					"http2": {
+						"model": "http",
+						"options": {
+							"port": 9090,
+							"routes": {
+								"post": {
+									"/": "./xmlrpcv1"
+								}
+							}
 						}
 					}
 				}
@@ -43,6 +71,10 @@ let config = {
 		},
 		"replicator": {
 			"path": "iris-service-replicator",
+			"params": {}
+		},
+		"xmlrpc-v1": {
+			"path": "iris-service-xmlrpc-v1",
 			"params": {}
 		}
 	},

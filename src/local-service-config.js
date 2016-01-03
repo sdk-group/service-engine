@@ -18,7 +18,7 @@ let config = {
 						"port": 3001
 					}
 					, "http": {
-						"port": 80
+						"port": 8080
 					}
 					, "https": {
 						"port": 443
@@ -28,13 +28,13 @@ let config = {
 					"websocket1": {
 						"model": "websocket",
 						"options": {
-							"port": 333
+							"port": 3001
 						}
 					}
 					, "http1": {
 						"model": "http",
 						"options": {
-							"port": 80,
+							"port": 8080,
 							"routes": {
 								"post" : {
 									"/iris_mo/equeue_ui/xmlrpc.php": "./xmlrpcv1"
