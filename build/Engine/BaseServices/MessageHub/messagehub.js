@@ -48,6 +48,12 @@ class MessageHub extends Abstract {
 					console.warn('AUTH check failed for token:', token);
 					return result;
 				}
+			}).catch(err => {
+				console.warn('AUTH check failed for:', token);
+				return {
+					value: false,
+					reason: "Internal error."
+				};
 			});
 		});
 	}
