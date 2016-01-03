@@ -70,28 +70,6 @@ class HttpConnector extends AbstractConnector {
 		this.io.on('error', err => {
 			console.log('HTTP error:', err);
 		});
-		//		_.map(this.routes, (uri) => {
-		//			this.io.on('connection', (socket) => {
-		//				this._on_connection(socket)
-		//					.then((valid) => {
-		//						if(valid.value === true) {
-		//							socket.on('message', (data) => {
-		//								this._on_message(data)
-		//									.then((response) => {
-		//										socket.emit('message', response);
-		//									});
-		//							});
-		//
-		//							socket.on('disconnect', this._on_disconnect);
-		//						} else {
-		//							socket.disconnect(valid.reason);
-		//						}
-		//					})
-		//					.catch((err) => {
-		//						socket.disconnect('Auth error.');
-		//					});
-		//			});
-		//		});
 		this.io.listen(this.port);
 		console.log('HTTP: listen to port', this.port);
 	}
