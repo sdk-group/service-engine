@@ -26,6 +26,7 @@
     "Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
     "bluebird": "^2.9.24",
     "cbird-rdf": "git+https://github.com/YuuKohaku/cbird-rdf.git",
+    "cookie": "^0.2.3",
     "finalhandler": "^0.4.1",
     "global-queue": "git+https://github.com/artificial-life/global-queue",
     "iris-service-replicator": "git+https://github.com/sdk-group/iris-service-replicator.git",
