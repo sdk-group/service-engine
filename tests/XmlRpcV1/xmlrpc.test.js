@@ -60,10 +60,10 @@ function initXMLRPCClient() {
 
 describe("XmlRpcV1", () => {
 
-	let client = initXMLRPCClient();
-
 	describe("test call success", () => {
 		it("shall respond", (done) => {
+			let client = initXMLRPCClient();
+
 			// Сначала надо обязательно залогиниться, либо использовать специальный токен для webwidget
 			client.methodCall('TestLogin', ['JohnDee', '123456', 'London'], function (error, value) {
 				expect(error).to.not.be.ok;
@@ -76,8 +76,11 @@ describe("XmlRpcV1", () => {
 			});
 		});
 		it("shall respond with login fail", (done) => {
+			let client = initXMLRPCClient();
+
 			client.methodCall('TestLogin', ['JohnDoe', '123456', 'London'], function (error, value) {
 				expect(error).to.be.ok;
+				done();
 			});
 		});
 	});
