@@ -75,5 +75,10 @@ describe("XmlRpcV1", () => {
 				});
 			});
 		});
+		it("shall respond with login fail", (done) => {
+			client.methodCall('TestLogin', ['JohnDoe', '123456', 'London'], function (error, value) {
+				expect(error).to.be.ok;
+			});
+		});
 	});
 });
