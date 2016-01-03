@@ -73,7 +73,14 @@ class ConnectorHolder {
 	on_message(resolver) {
 		_.map(this.connectors, (conn) => {
 			return conn.on_message((data) => {
-				// token check here
+				return resolver(data);
+			});
+		});
+	}
+
+	on_login(resolver) {
+		_.map(this.connectors, (conn) => {
+			return conn.on_login((data) => {
 				return resolver(data);
 			});
 		});

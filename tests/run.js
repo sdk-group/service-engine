@@ -111,20 +111,20 @@ loader.load({
 	})
 	.then(() => {
 		let Engine = require('./Engine/Engine.js');
-		let EventRegistry = require('./Engine//EventRegistry.js');
+		let EventRegistry = require('./Engine/EventRegistry.js');
 		let event_list = require('./Engine/Model/Events/event-list.js');
 		EventRegistry.init(event_list);
 
 		Engine.config = loader.SG;
-		Engine.launch().then(() => {
-			console.log('All groups started!');
+		Engine.launch()
+			.then((res) => {
+				console.log('All groups started!', res);
+				var gulp = require("gulp");
+				var mocha = require('gulp-mocha');
 
-			var gulp = require("gulp");
-			var mocha = require('gulp-mocha');
-
-			gulp.src('build/**/*.test.js', {
-					read: false
-				})
-				.pipe(mocha());
-		});
+				gulp.src('build/**/*.test.js', {
+						read: false
+					})
+					.pipe(mocha());
+			});
 	});

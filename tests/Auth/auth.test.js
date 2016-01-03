@@ -143,9 +143,7 @@ describe("Auth", () => {
 	describe("check session", () => {
 		it("shall pass", (done) => {
 			auth.check({
-					user: "JohnDee",
 					token: token,
-					origin: "London"
 				})
 				.then((res) => {
 					expect(res).to.have.property("value").which.is.true;
@@ -158,9 +156,7 @@ describe("Auth", () => {
 		});
 		it("shall not pass", (done) => {
 			auth.check({
-					user: "JohnDee",
 					token: "1",
-					origin: "London"
 				})
 				.then((res) => {
 					expect(res).to.have.property("value").which.is.false;
@@ -175,9 +171,7 @@ describe("Auth", () => {
 	describe("update session", () => {
 		it("should update token", (done) => {
 			auth.update({
-					user: "JohnDee",
 					token: token,
-					origin: "London"
 				})
 				.then((res) => {
 					expect(res).to.have.property("value").which.is.true;
@@ -192,9 +186,7 @@ describe("Auth", () => {
 		});
 		it("should reject session update", (done) => {
 			auth.update({
-					user: "JohnDee",
 					token: "1",
-					origin: "London"
 				})
 				.then((res) => {
 					expect(res).to.have.property("value").which.is.false;

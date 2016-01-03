@@ -19,14 +19,15 @@ class Engine {
 		this.services = _.map(main_group, item => this.createService(item.path));
 	}
 	static createService(path) {
-		console.log("SE", path);
 		let ServiceModel = discover(path);
 		return ServiceModel.constructor.name != "Object" ? new ServiceModel() : new Servicify(ServiceModel);
 	}
 	static launch() {
 		let init = _.map(this.services, (service, index) => service.init(this.service_params[index]));
 
-		return Promise.all(init).then(() => _.map(this.services, service => service.launch()));
+		return Promise.all(init).then(() => {
+			return Promise.all(_.map(this.services, service => service.launch()));
+		});
 	}
 }
 

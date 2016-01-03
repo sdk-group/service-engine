@@ -1,22 +1,22 @@
 'use strict'
 
-let events = {};
+let events_list = {};
 
 class EventRegistry {
 	constructor() {
 		throw new Error('singletone');
 	}
 	static init(init_events) {
-		events = init_events;
+		events_list = init_events;
 	}
 	static addGroup(events) {
-		events[events.group] = events.shorthands;
+		events_list[events.group] = events.shorthands;
 	}
 	static getEvents(service, name) {
 		if(!name) {
-			return events[service];
+			return events_list[service];
 		}
-		return events[service][name];
+		return events_list[service][name];
 	}
 }
 
