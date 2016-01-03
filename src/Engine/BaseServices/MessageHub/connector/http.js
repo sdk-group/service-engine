@@ -98,7 +98,22 @@ class HttpConnector extends AbstractConnector {
 		return this._on_message(data);
 	}
 
-	on_login(callback) {}
+	/**
+	 * @param data Сообщение формата: {
+	 *		username: user,
+	 *		password_hash: pass,
+	 *		origin: origin
+	 *	}
+	 * @return {Promise} Обещание обработки сообщения
+	 */
+	sendLoginMessage(data) {
+		return this._on_login(data);
+	}
+
+	on_login(callback) {
+		if(_.isFunction(callback))
+			this._on_login = callback;
+	}
 
 	on_connection(callback) {
 		if(_.isFunction(callback))

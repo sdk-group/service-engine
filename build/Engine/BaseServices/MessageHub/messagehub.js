@@ -25,6 +25,7 @@ class MessageHub extends Abstract {
 				password_hash: pass,
 				address: origin
 			}).catch(err => {
+				console.warn('AUTH failed for:', user, pass, origin);
 				return {
 					value: false,
 					reason: "Internal error."
@@ -44,6 +45,7 @@ class MessageHub extends Abstract {
 					//@TODO: check permissions here
 					return this.emitter.addTask(data.destination, data.data);
 				} else {
+					console.warn('AUTH check failed for token:', token);
 					return result;
 				}
 			});
