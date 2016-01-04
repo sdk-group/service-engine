@@ -18,7 +18,7 @@ let config = {
 						"port": 3001
 					}
 					, "http": {
-						"port": 8080
+						"port": 8081
 					}
 					, "https": {
 						"port": 443
@@ -34,7 +34,7 @@ let config = {
 					, "http1": {
 						"model": "http",
 						"options": {
-							"port": 8080,
+							"port": 8081,
 							"routes": {
 								"post" : {
 									"/iris_mo/equeue_ui/xmlrpc.php": "./xmlrpcv1"
