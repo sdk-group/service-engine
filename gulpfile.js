@@ -7,6 +7,7 @@ let watch = require('gulp-watch');
 let changed = require('gulp-changed');
 let nodemon = require('gulp-nodemon');
 let plumber = require('gulp-plumber');
+let mocha = require('gulp-mocha');
 let path = require('path');
 let demon;
 
@@ -54,6 +55,27 @@ gulp.task('es6', ['es6-js', 'json']);
 
 gulp.task('test', ['start-test'], function() {
 	gulp.watch(["src/**/*.js", "tests/**/*.js"], ['es6']);
+});
+
+gulp.task('test-jenkins', ['es6'], function() {
+	return gulp.src(["build/**/*.js"])
+		.pipe(mocha({
+			reporter: 'spec',
+			globals: {
+				chai: require('chai')
+			},
+			timeout: 30000
+		}))
+		.once('error', function(err) {
+			console.error(err);
+			if ('undefined' !== typeof err.stack) {
+				console.error(err.stack);
+			}
+			process.exit(1);
+		})
+		.once('end', function() {
+			process.exit();
+		});
 });
 
 gulp.task('serve', ['start-serve'], function() {
