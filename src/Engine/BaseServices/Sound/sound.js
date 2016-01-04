@@ -67,4 +67,4 @@ class Sound extends Abstract {
   }
 }
 
-module.exports = Broker;
+module.exports = Sound;
