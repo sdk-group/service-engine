@@ -33,7 +33,6 @@
     "iris-service-xmlrpc-v1": "git+https://github.com/sdk-group/iris-service-xmlrpc-v1.git",
     "jsonwebtoken": "^5.4.1",
     "lodash": "^3.7.0",
-    "make-error": "^1.0.2",
     "node-uuid": "^1.4.3",
     "request": "^2.55.0",
     "router": "^1.1.3",

@@ -4,7 +4,6 @@ let Abstract = require('../Abstract/abstract.js');
 let path = require("path");
 
 let Couchbird = require("Couchbird");
-let Error = require(_base + "/Engine/Model/Error/Lapsus")("FacehuggerError");
 
 let db_config = require(_base + "/config/db_config");
 let DB_Face = null;

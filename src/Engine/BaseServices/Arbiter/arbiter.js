@@ -6,7 +6,7 @@ let qs = require("querystring");
 let request = Promise.promisify(require("request"));
 
 let Abstract = require('../Abstract/abstract.js');
-let Error = require(_base + "/Engine/Model/Error/Lapsus")("ArbiterError");
+
 let constellation = require(_base + '/config/Constellation');
 
 //UTILITY
@@ -141,10 +141,10 @@ class Arbiter extends Abstract {
     let mst = this.hosts.show(mhost);
     let slv = this.hosts.show(shost);
     if (!slv || !mst) {
-      return Promise.reject(new Error("MISCONFIGURATION", "Configure source and destination hosts before you ask it for anything, dammit."));
+      return Promise.reject(new Error("Configure source and destination hosts before you ask it for anything, dammit."));
     }
     if (!mst.active || !slv.active) {
-      return Promise.reject(new Error("SERVICE_ERROR", "At least one of provided hosts is unreachable."));
+      return Promise.reject(new Error("At least one of provided hosts is unreachable."));
     }
 
     console.log("ARBITER: pausing replication");
