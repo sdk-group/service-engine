@@ -2,7 +2,6 @@
 
 let Abstract = require('../Abstract/abstract.js');
 let _ = require("lodash");
-let Error = require("../Error/Lapsus")("SoundServiceError");
 let sound_util = require("sound-conjunct");
 
 class Sound extends Abstract {
@@ -41,7 +40,7 @@ class Sound extends Abstract {
     options: opts
   }) {
     if (this.paused)
-      return Promise.reject(new Error("SERVICE_ERROR", "Service is paused"));
+      return Promise.reject(new Error("Service is paused"));
     return sound_util.concatenate(files, out, opts);
   }
 
@@ -52,7 +51,7 @@ class Sound extends Abstract {
     options: opts
   }) {
     if (this.paused)
-      return Promise.reject(new Error("SERVICE_ERROR", "Service is paused"));
+      return Promise.reject(new Error("Service is paused"));
     return sound_util.ffmpeg_transcode(files, out, exts, opts);
   }
 
@@ -63,7 +62,7 @@ class Sound extends Abstract {
     options: opts
   }) {
     if (this.paused)
-      return Promise.reject(new Error("SERVICE_ERROR", "Service is paused"));
+      return Promise.reject(new Error("Service is paused"));
     return sound_util.libav_transcode(files, out, exts, opts);
   }
 }
