@@ -5,10 +5,10 @@
 	"main": "index.js",
 	"directories": {
 		"test": "mocha",
-		"install": "gulp --gulpfile build.js"
 	},
 	"scripts": {
-		"test": "mocha ./build/**/*.test.js -r ./build/index.js"
+		"test": "mocha ./build/**/*.test.js -r ./build/index.js",
+		"install": "gulp --gulpfile build.js"
 	},
 	"repository": {
 		"type": "git",
