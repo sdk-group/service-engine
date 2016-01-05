@@ -4,5 +4,6 @@ EventRegistry.init(event_list);
 
 module.exports = {
 	Engine: require('./build/Engine/Engine'),
-	EventRegistry: EventRegistry
+	EventRegistry: EventRegistry,
+	Constellation: require("./build/config/Constellation")
 };
