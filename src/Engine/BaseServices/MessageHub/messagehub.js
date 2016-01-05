@@ -2,7 +2,7 @@
 
 let Abstract = require('../Abstract/abstract.js');
 let ConnectorHolder = require("./connector/holder");
-let auth = require('iris-auth');
+let auth = require('iris-auth-util');
 
 class MessageHub extends Abstract {
 	constructor() {

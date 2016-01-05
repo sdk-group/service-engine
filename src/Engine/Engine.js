@@ -37,7 +37,7 @@ class Engine {
 				return true;
 			})
 			.catch((err) => {
-				// console.error(err);
+				console.error(err.stack);
 				return false;
 			});
 	}
@@ -49,12 +49,10 @@ class Engine {
 		return this.cfg_ready
 			.then((res) => {
 				let init = _.map(this.services, (service, index) => service.init(this.service_params[index]));
-
-				return Promise
-					.all(init)
-					.then(() => {
-						return Promise.all(_.map(this.services, (service) => service.launch()))
-					});
+				return Promise.all(init);
+			})
+			.then(() => {
+				return Promise.all(_.map(this.services, (service) => service.launch()))
 			});
 	}
 }

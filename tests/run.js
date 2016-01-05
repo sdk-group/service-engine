@@ -4,7 +4,7 @@ require('./boot.js');
 require("./hosts.js");
 
 let config = require('./config/db_config.json');
-let Auth = require('iris-auth');
+let Auth = require('iris-auth-util');
 let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
 
 Auth.configure({
