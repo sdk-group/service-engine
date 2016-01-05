@@ -10,7 +10,7 @@ class EventRegistry {
 		events_list = init_events;
 	}
 	static addGroup(events) {
-		events_list[events.group] = events.shorthands;
+		events_list[events.group] = _.merge(events_list[events.group], events.shorthands);
 	}
 	static getEvents(service, name) {
 		if(!name) {
