@@ -75,8 +75,10 @@ describe("XmlRpcV1", () => {
 				expect(value).to.equal('Hello olegabr!');
 				done();
 			}).catch((error) => {
-				expect(error).to.not.be.ok;
-				done();
+				if (!error) {
+					error = new Error('Failed to login or call TestMethod');
+				}
+				done(error);
 			});
 		});
 		it("shall respond with login fail", (done) => {
