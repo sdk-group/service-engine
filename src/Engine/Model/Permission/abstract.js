@@ -1,6 +1,6 @@
 'use strict'
 
-let getEvents = require(_base + '/Engine/Model/Events/events.js');
+let getEvents = require('../Events/events.js');
 /**
  * Abstract permission, just for lulz
  * @param {Object} params permission specific params

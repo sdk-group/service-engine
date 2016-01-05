@@ -1,7 +1,5 @@
 'use strict'
 
-let _ = require('lodash');
-
 let AbstractService = require('./BaseServices/Abstract');
 let Servicify = require('./BaseServices/Servicify');
 

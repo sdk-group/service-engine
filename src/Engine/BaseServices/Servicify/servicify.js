@@ -5,7 +5,7 @@ let queue = require('global-queue');
 
 let Abstract = require('../Abstract');
 //@FIXIT: not implemented yet
-let EventRegistry = require(_base + '/Engine/EventRegistry.js');
+let EventRegistry = require('../../EventRegistry.js');
 //
 // const example = {
 //   module: require('./some_module.js'),

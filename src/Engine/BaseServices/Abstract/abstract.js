@@ -3,7 +3,7 @@
 let Promise = require('bluebird');
 let _ = require('lodash');
 
-let EventRegistry = require(_base + '/Engine/EventRegistry.js');
+let EventRegistry = require('../../EventRegistry.js');
 
 let PermissionLogic = require('./permission-logic.js');
 let queue = require('global-queue');
