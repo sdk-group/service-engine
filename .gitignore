@@ -44,5 +44,5 @@ Temporary Items
 
 # Node
 node_modules
-#build
+build
 /nbproject
