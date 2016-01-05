@@ -86,8 +86,7 @@ describe("XmlRpcV1", () => {
 
 			client.methodCall('TestLogin', ['JohnDoe', '123456', 'London']).then((value) => {
 				// не должны сюда попасть!
-				expect(true).to.not.be.ok;
-				done();
+				done(true);
 			}).catch((error) => {
 				// должны словить ошибку
 				expect(error).to.be.ok;
