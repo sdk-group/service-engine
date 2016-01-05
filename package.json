@@ -4,7 +4,8 @@
 	"description": "Multithreaded SOA draft",
 	"main": "index.js",
 	"directories": {
-		"test": "test"
+		"test": "mocha",
+		"install": "gulp --gulpfile build.js"
 	},
 	"scripts": {
 		"test": "mocha ./build/**/*.test.js -r ./build/index.js"
