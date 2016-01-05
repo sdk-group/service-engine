@@ -173,4 +173,4 @@ class Gandalf {
 	}
 }
 
-export default Gandalf;
+module.exports = Gandalf;

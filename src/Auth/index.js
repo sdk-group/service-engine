@@ -1,3 +1,2 @@
-let gandalf = require("./gandalf");
+module.exports = require("./gandalf");
 //I SHALL PASS
-export default gandalf;
