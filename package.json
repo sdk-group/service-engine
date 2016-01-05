@@ -1,6 +1,6 @@
 {
-	"name": "v2-services",
-	"version": "0.1.1",
+	"name": "iris-service-engine",
+	"version": "1.0.1",
 	"description": "Multithreaded SOA draft",
 	"main": "index.js",
 	"directories": {
