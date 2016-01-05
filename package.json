@@ -4,7 +4,7 @@
 	"description": "Multithreaded SOA draft",
 	"main": "index.js",
 	"directories": {
-		"test": "mocha",
+		"test": "test"
 	},
 	"scripts": {
 		"test": "mocha ./build/**/*.test.js -r ./build/index.js",
