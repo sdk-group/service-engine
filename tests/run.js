@@ -6,12 +6,10 @@ require("./hosts.js");
 let config = require('./config/db_config.json');
 let Auth = require('iris-auth-util');
 let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
-
 Auth.configure({
 	data: config.buckets.main,
 	session: config.buckets.auth
 });
-
 
 let Engine = require('./Engine/Engine.js');
 let EventRegistry = require('./Engine/EventRegistry.js');

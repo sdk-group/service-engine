@@ -30,13 +30,14 @@
 		"node-uuid": "^1.4.3",
 		"sound-conjunct": "git+https://github.com/YuuKohaku/sound-conjunct.git",
 		"traverse": "^0.6.6",
-		"validator": "^3.40.0",
+		"validator": "^3.40.0"
 	},
 	"devDependencies": {
 		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
 		"cbird-rdf": "git+https://github.com/YuuKohaku/cbird-rdf.git",
 		"iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",
 		"iris-service-xmlrpc-v1": "git+https://github.com/sdk-group/iris-service-xmlrpc-v1.git",
+		"iris-service-messagehub": "git+https://github.com/sdk-group/iris-service-messagehub.git",
 		"xmlrpc": "github:olegabr/node-xmlrpc",
 		"chai": "^3.3.0",
 		"gulp": "^3.9.0",
