@@ -86,10 +86,10 @@ describe("XmlRpcV1", () => {
 
 			client.methodCall('TestLogin', ['JohnDoe', '123456', 'London']).then((value) => {
 				// не должны сюда попасть!
-				done(true);
+				done(new Error('Unexpected behavior.'));
 			}).catch((error) => {
 				// должны словить ошибку
-				expect(error).to.be.ok;
+				expect(error).to.be.instanceOf(Error);
 				done();
 			});
 		});
