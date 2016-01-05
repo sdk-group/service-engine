@@ -115,7 +115,7 @@ class XmlRpcApiV1 {
 		}
 		return this.connector.sendLoginMessage(data).then((result) => {
 			if (!result.value) {
-				throw xmlrpc.makeError('result.reason', ERROR_CODE_DB);
+				throw xmlrpc.makeError(result.reason, ERROR_CODE_DB);
 			}
 			return result.token;
 		});
