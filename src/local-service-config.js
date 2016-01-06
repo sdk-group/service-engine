@@ -32,7 +32,7 @@ let config = {
 						}
 					}
 					, "http1": {
-						"model": "http",
+						"model": "http/http",
 						"options": {
 							"port": 8081,
 							"routes": {
@@ -43,7 +43,7 @@ let config = {
 						}
 					}
 					, "http2": {
-						"model": "http",
+						"model": "http/http",
 						"options": {
 							"port": 9090,
 							"routes": {
