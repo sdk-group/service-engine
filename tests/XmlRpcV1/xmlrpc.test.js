@@ -69,8 +69,7 @@ describe("XmlRpcV1", () => {
 
 			// Сначала надо обязательно залогиниться, либо использовать специальный токен для webwidget
 			client.methodCall('TestLogin', ['JohnDee', '123456', 'London']).then((value) => {
-				console.log("CAL", value);
-				expect(value).to.have.property('value', true);
+				expect(value).to.equal(true);
 				return client.methodCall('TestMethod', ['olegabr']);
 			}).then((value) => {
 				expect(value).to.equal('Hello olegabr!');
@@ -87,7 +86,7 @@ describe("XmlRpcV1", () => {
 
 			client.methodCall('TestLogin', ['JohnDoe', '123456', 'London']).then((value) => {
 				// не должны сюда попасть!
-				done(new Error('Unexpected behavior.'));
+				done(new Error('Unexpected behaviour.'));
 			}).catch((error) => {
 				// должны словить ошибку
 				expect(error).to.be.instanceOf(Error);
