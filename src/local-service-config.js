@@ -11,7 +11,7 @@ let config = {
 			}
 		},
 		"message-hub": {
-			path: "./BaseServices/MessageHub",
+			path: "iris-service-messagehub",
 			params: {
 				"default_options": {
 					"websocket": {
