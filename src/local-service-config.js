@@ -11,7 +11,7 @@ let config = {
 			}
 		},
 		"message-hub": {
-			path: "./BaseServices/MessageHub",
+			path: "iris-service-messagehub",
 			params: {
 				"default_options": {
 					"websocket": {
@@ -32,7 +32,7 @@ let config = {
 						}
 					}
 					, "http1": {
-						"model": "http",
+						"model": "http/http",
 						"options": {
 							"port": 8081,
 							"routes": {
@@ -43,7 +43,7 @@ let config = {
 						}
 					}
 					, "http2": {
-						"model": "http",
+						"model": "http/http",
 						"options": {
 							"port": 9090,
 							"routes": {
@@ -65,7 +65,9 @@ let config = {
 		},
 		"facehugger": {
 			"path": "./BaseServices/Facehugger",
-			"params": {}
+			"params": {
+				"bucket_name": "rdf"
+			}
 		},
 		"replicator": {
 			"path": "iris-service-replicator",
