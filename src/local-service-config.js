@@ -65,7 +65,9 @@ let config = {
 		},
 		"facehugger": {
 			"path": "./BaseServices/Facehugger",
-			"params": {}
+			"params": {
+				"bucket_name": "rdf"
+			}
 		},
 		"replicator": {
 			"path": "iris-service-replicator",
