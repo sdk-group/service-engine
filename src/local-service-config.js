@@ -11,16 +11,16 @@ let config = {
 			}
 		},
 		"message-hub": {
-			path: "iris-service-messagehub",
-			params: {
+			"path": "iris-service-messagehub",
+			"params": {
 				"default_options": {
 					"websocket": {
 						"port": 3001
-					}
-					, "http": {
+					},
+					"http": {
 						"port": 8081
-					}
-					, "https": {
+					},
+					"https": {
 						"port": 443
 					}
 				},
@@ -30,37 +30,30 @@ let config = {
 						"options": {
 							"port": 3001
 						}
-					}
-					, "http1": {
-						"model": "http/http",
+					},
+					"http1": {
+						"model": "http",
 						"options": {
 							"port": 8081,
 							"routes": {
-								"post" : {
-									"/iris_mo/equeue_ui/xmlrpc.php": "./xmlrpcv1"
+								"post": {
+									"/iris_mo/equeue_ui/xmlrpc.php": "./http/xmlrpcv1"
 								}
 							}
 						}
-					}
-					, "http2": {
-						"model": "http/http",
+					},
+					"http2": {
+						"model": "http",
 						"options": {
 							"port": 9090,
 							"routes": {
-								"post" : {
-									"/": "./xmlrpcv1"
+								"post": {
+									"/": "./http/xmlrpcv1"
 								}
 							}
 						}
 					}
 				}
-			}
-		},
-		"sample-service": {
-			"path": "./BaseServices/SampleService",
-			"params": {
-				"param1": 1,
-				"param2": 2
 			}
 		},
 		"facehugger": {
