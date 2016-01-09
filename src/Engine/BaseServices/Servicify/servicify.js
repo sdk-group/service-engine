@@ -84,7 +84,7 @@ class Servicify extends Abstract {
     data: data
   }) {
     let kebab = 'action-' + handler;
-    let method_name = _.snakeCase(kebab);
+    let method_name = _.camelCase(kebab);
     let module = this.module;
 
     if (!(module[method_name] instanceof Function))
