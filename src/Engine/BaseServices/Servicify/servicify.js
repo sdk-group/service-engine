@@ -39,7 +39,8 @@ const FAILURE_MESSAGE = {
 class Servicify extends Abstract {
   constructor(config) {
     super({});
-    EventRegistry.addGroup(config.events);
+    let events = config.events || {};
+    EventRegistry.addGroup(events);
 
     let Model = config.module;
     this.module = new Model();
@@ -49,6 +50,7 @@ class Servicify extends Abstract {
     });
 
     if (!config.tasks || _.isEmpty(tasks)) {
+
       let controller_name = config.name || _.kebabCase(Model.name);
 
       queue.listenTask(controller_name, (data_and_action) => {
