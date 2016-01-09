@@ -9,6 +9,7 @@ let EventRegistry = require('../../EventRegistry.js');
 //
 // const example = {
 //   module: require('./some_module.js'),
+//   name: 'mymodule',
 //   permissions: [{
 //     'name': 'some_name',
 //     'params': {
@@ -48,10 +49,10 @@ class Servicify extends Abstract {
     });
 
     if (!config.tasks || _.isEmpty(tasks)) {
-      let controller_name = Model.name.toLowerCase();
+      let controller_name = config.name || _.kebabCase(Model.name);
 
-      queue.listenTask(controller_name, (data_with_actions) => {
-        return this.isWorking() ? this.getAction(data_with_actions) : FAILURE_MESSAGE
+      queue.listenTask(controller_name, (data_and_action) => {
+        return this.isWorking() ? this.getAction(data_and_action) : FAILURE_MESSAGE
       });
     }
 
@@ -60,7 +61,9 @@ class Servicify extends Abstract {
         throw new Error('no such method');
 
       let method = this.module[task.handler].bind(this.module);
-      queue.listenTask(task.name, (data) => {
+      let name = task.name || _.kebabCase(task.handler);
+
+      queue.listenTask(name, (data) => {
         return this.isWorking() ? method(data) : FAILURE_MESSAGE
       });
     });
@@ -80,10 +83,14 @@ class Servicify extends Abstract {
     action: handler,
     data: data
   }) {
-    if (!(this.module[handler] instanceof Function))
+    let kebab = 'action-' + handler;
+    let method_name = _.snakeCase(kebab);
+    let module = this.module;
+
+    if (!(module[method_name] instanceof Function))
       throw new Error('no such method');
 
-    return this.module[handler].call(this.module, data);
+    return module[method_name].call(module, data);
   }
 }
 
