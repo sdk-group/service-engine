@@ -31,42 +31,60 @@ let EventRegistry = require('../../EventRegistry.js');
 // };
 
 const FAILURE_MESSAGE = {
-	reason: 'service down',
-	status: 'failed'
+  reason: 'service down',
+  status: 'failed'
 };
 
 class Servicify extends Abstract {
-	constructor(config) {
-		super({});
-		EventRegistry.addGroup(config.events);
+  constructor(config) {
+    super({});
+    EventRegistry.addGroup(config.events);
 
-		let Model = config.module;
-		this.module = new Model();
+    let Model = config.module;
+    this.module = new Model();
 
-		_.forEach(config.permissions, (permission) => {
-			this.addPermission(permission.name, permission.params);
-		});
+    _.forEach(config.permissions, (permission) => {
+      this.addPermission(permission.name, permission.params);
+    });
 
-		_.forEach(config.tasks, (task) => {
-			if(!(this.module[task.handler] instanceof Function))
-				throw new Error('no such method');
+    if (!config.tasks || _.isEmpty(tasks)) {
+      let controller_name = Model.name.toLowerCase();
 
-			let method = this.module[task.handler].bind(this.module);
-			queue.listenTask(task.name, (data) => {
-				return this.isWorking() ? method(data) : FAILURE_MESSAGE
-			});
-		});
-	}
-	getName() {
-		return `${this.constructor.name} of ${this.module.constructor.name}`;
-	}
+      queue.listenTask(controller_name, (data_with_actions) => {
+        return this.isWorking() ? this.getAction(data_with_actions) : FAILURE_MESSAGE
+      });
+    }
 
-	init(config) {
-		return super.init(config)
-			.then((res) => {
-				return _.isFunction(this.module.init) ? this.module.init(config) : res;
-			});
-	}
+    _.forEach(config.tasks, (task) => {
+      if (!(this.module[task.handler] instanceof Function))
+        throw new Error('no such method');
+
+      let method = this.module[task.handler].bind(this.module);
+      queue.listenTask(task.name, (data) => {
+        return this.isWorking() ? method(data) : FAILURE_MESSAGE
+      });
+    });
+  }
+  getName() {
+    return `${this.constructor.name} of ${this.module.constructor.name}`;
+  }
+
+  init(config) {
+    return super.init(config)
+      .then((res) => {
+        return _.isFunction(this.module.init) ? this.module.init(config) : res;
+      });
+  }
+
+  getAction({
+    action: handler,
+    data: data
+  }) {
+    if (!(this.module[handler] instanceof Function))
+      throw new Error('no such method');
+
+    return this.module[handler].call(this.module, data);
+  }
 }
 
 
