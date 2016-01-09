@@ -63,7 +63,7 @@ describe.only("Response-Request", () => {
             result = d;
             expect(result).to.be.equal('O_O_O');
             done();
-          });
+          }).catch((err) => done(err));
         })
       });
     });

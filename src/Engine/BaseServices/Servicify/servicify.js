@@ -50,7 +50,6 @@ class Servicify extends Abstract {
     });
 
     if (!config.tasks || _.isEmpty(tasks)) {
-
       let controller_name = config.name || _.kebabCase(Model.name);
 
       queue.listenTask(controller_name, (data_and_action) => {
@@ -87,12 +86,11 @@ class Servicify extends Abstract {
   }) {
     let kebab = 'action-' + handler;
     let method_name = _.camelCase(kebab);
+
     let module = this.module;
+    let method = module[method_name];
 
-    if (!(module[method_name] instanceof Function))
-      throw new Error('no such method');
-
-    return module[method_name].call(module, data);
+    return method instanceof Function ? method.call(module, data) : new Error('no such method');
   }
 }
 
