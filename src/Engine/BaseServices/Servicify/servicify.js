@@ -80,11 +80,8 @@ class Servicify extends Abstract {
       });
   }
 
-  getAction({
-    action: handler,
-    data: data
-  }) {
-    let kebab = 'action-' + handler;
+  getAction(data) {
+    let kebab = 'action-' + data._action;
     let method_name = _.camelCase(kebab);
 
     let module = this.module;
