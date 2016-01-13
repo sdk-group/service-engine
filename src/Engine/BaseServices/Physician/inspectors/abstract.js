@@ -17,7 +17,7 @@ class AbstractInspector {
 
 		this.inspector_name = inspector_name;
 
-		let permission = this.permission_watched = require(_base + '/Engine/Model/Permission/' + /*_.capitalize*/(permission_watched) + '.js');
+		let permission = this.permission_watched = require(_base + '/Engine/Model/Permission/' + /*_.upperFirst*/(permission_watched) + '.js');
 
 		this.permission_name = permission.getName();
 		this.key = permission.makeKey(key_data);

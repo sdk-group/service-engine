@@ -34,9 +34,9 @@ let get_history = function(ip, sb, since) {
 
 let compare = function(hst_m, hst_s) {
 	let conflict = {};
-	let index_m = _.indexBy(hst_m, "id");
+	let index_m = _.keyBy(hst_m, "id");
 	let ids_m = _.keys(index_m, "id");
-	let index_s = _.indexBy(hst_s, "id");
+	let index_s = _.keyBy(hst_s, "id");
 	let ids_s = _.keys(index_s, "id");
 	let diff_m = _.difference(ids_m, ids_s); //ids that are present only on master
 	let diff_s = _.difference(ids_s, ids_m); //ids that are present only on slave

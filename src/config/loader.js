@@ -28,7 +28,7 @@ let Config = function(bucket) {
 
 	let _getTraverse = function(obj, where) {
 		let path = _.isArray(where) ? where : where.split(_path_delimiter);
-		path = (_.first(path) != "default") ? path : _.rest(path);
+		path = (_.head(path) != "default") ? path : _.tail(path);
 		return traverse(obj).get(path);
 	}
 

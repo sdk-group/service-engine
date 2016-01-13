@@ -30,7 +30,7 @@ class Engine {
 			.then((config) => {
 				let main_group = config.main_group;
 
-				this.service_params = _.pluck(main_group, 'params');
+				this.service_params = _.map(main_group, 'params');
 				this.services = _.map(main_group, (item) => this.createService(item.path));
 				return true;
 			})

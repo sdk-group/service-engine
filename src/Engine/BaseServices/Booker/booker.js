@@ -144,7 +144,7 @@ class Booker extends Abstract {
 		if(this.paused || this.master_stella && !this.master_stella.active)
 			return Promise.reject(new Error("Service is paused"));
 		let [type, num_id] = id.split("/");
-		let mo_name = _.capitalize(type);
+		let mo_name = _.upperFirst(type);
 		let mo = this.meta_tree[mo_name];
 		if(!mo)
 			return Promise.reject(new Error("No such class in MetaTree"));
@@ -166,7 +166,7 @@ class Booker extends Abstract {
 		if(this.paused || this.master_stella && !this.master_stella.active)
 			return Promise.reject(new Error("Service is paused"));
 		let [type, num_id] = id.split("/");
-		let mo_name = _.capitalize(type);
+		let mo_name = _.upperFirst(type);
 		let mo = this.meta_tree[mo_name];
 		if(!mo)
 			return Promise.reject(new Error("No such class in MetaTree"));

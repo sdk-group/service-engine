@@ -11,7 +11,7 @@ let getPermissionModel = function(module_name) {
 		return modules[module_name];
 	}
 
-	modules[module_name] = require(_base + '/Engine/Model/Permission/' + /*_.capitalize*/ (module_name) + '.js');
+	modules[module_name] = require(_base + '/Engine/Model/Permission/' + /*_.upperFirst*/ (module_name) + '.js');
 
 	return modules[module_name];
 }
