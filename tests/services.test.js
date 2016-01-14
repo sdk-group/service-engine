@@ -43,8 +43,8 @@ describe.only("Response-Request", () => {
         let result;
         launch.then(() => {
           queue.addTask('test-request', {
-            action: "test-test",
-            data: "a a a!"
+            _action: "test-test",
+            string: "a a a!"
           }).then((d) => {
             result = d;
             expect(result).to.be.equal('A_A_A');
@@ -57,8 +57,8 @@ describe.only("Response-Request", () => {
         let result;
         launch.then(() => {
           queue.addTask('not-test', {
-            action: "test-test",
-            data: "o o o"
+            _action: "test-test",
+            string: "o o o"
           }).then((d) => {
             result = d;
             expect(result).to.be.equal('O_O_O');

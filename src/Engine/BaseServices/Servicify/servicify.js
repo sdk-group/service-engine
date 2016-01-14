@@ -49,12 +49,10 @@ class Servicify extends Abstract {
       this.addPermission(permission.name, permission.params);
     });
 
-    if (!config.tasks || _.isEmpty(tasks)) {
+    if (config.exposed) {
       let controller_name = config.name || _.kebabCase(Model.name);
 
-      queue.listenTask(controller_name, (data_and_action) => {
-        return this.isWorking() ? this.getAction(data_and_action) : FAILURE_MESSAGE
-      });
+      queue.listenTask(controller_name, (data_and_action) => this.isWorking() ? this.getAction(data_and_action) : FAILURE_MESSAGE);
     }
 
     _.forEach(config.tasks, (task) => {
@@ -64,9 +62,7 @@ class Servicify extends Abstract {
       let method = this.module[task.handler].bind(this.module);
       let name = task.name || _.kebabCase(task.handler);
 
-      queue.listenTask(name, (data) => {
-        return this.isWorking() ? method(data) : FAILURE_MESSAGE
-      });
+      queue.listenTask(name, (data) => this.isWorking() ? method(data) : FAILURE_MESSAGE);
     });
   }
   getName() {
