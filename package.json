@@ -27,6 +27,7 @@
 		"bluebird": "^2.9.24",
 		"global-queue": "git+https://github.com/artificial-life/global-queue",
 		"iris-service-replicator": "git+https://github.com/sdk-group/iris-service-replicator.git",
+		"resource-management-framework": "git+https://github.com/YuuKohaku/rmf-on-rdf.git",
 		"lodash": "^4.0.0",
 		"node-uuid": "^1.4.3",
 		"sound-conjunct": "git+https://github.com/YuuKohaku/sound-conjunct.git",
