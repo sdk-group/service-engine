@@ -27,11 +27,11 @@
 		"bluebird": "^2.9.24",
 		"global-queue": "git+https://github.com/artificial-life/global-queue",
 		"iris-service-replicator": "git+https://github.com/sdk-group/iris-service-replicator.git",
-		"lodash": "^3.7.0",
+		"lodash": "^4.0.0",
 		"node-uuid": "^1.4.3",
 		"sound-conjunct": "git+https://github.com/YuuKohaku/sound-conjunct.git",
 		"traverse": "^0.6.6",
-		"validator": "^3.40.0"
+		"validator": "^3.43.0"
 	},
 	"devDependencies": {
 		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",

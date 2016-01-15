@@ -46,3 +46,4 @@ Temporary Items
 node_modules
 build
 /nbproject
+npm-debug.log
