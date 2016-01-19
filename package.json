@@ -17,6 +17,10 @@
 	"keywords": [
 		"IRIS"
 	],
+	"babel": {
+		"presets": ["node5"],
+		"babelrc": false
+	},
 	"author": "SS & V.",
 	"license": "ISC",
 	"bugs": {
@@ -35,6 +39,7 @@
 		"validator": "^3.43.0"
 	},
 	"devDependencies": {
+		"babel-preset-node5": "^10.3.0",
 		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
 		"cbird-rdf": "git+https://github.com/YuuKohaku/cbird-rdf.git",
 		"iris-auth-util": "git+https://github.com/sdk-group/iris-auth-util.git",
