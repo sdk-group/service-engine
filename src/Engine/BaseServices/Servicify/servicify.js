@@ -60,7 +60,7 @@ class Servicify extends Abstract {
 		let module = this.module;
 		let method = module[method_name];
 		if(!_.isFunction(method))
-			throw new Error('no such method');
+			throw new Error('no such method: ' + method_name);
 
 		return method.call(module, data);
 	}
