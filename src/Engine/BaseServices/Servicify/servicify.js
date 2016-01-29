@@ -57,12 +57,12 @@ class Servicify extends Abstract {
 		let kebab = 'action-' + data._action;
 		let method_name = _.camelCase(kebab);
 
-		let module = this.module;
-		let method = module[method_name];
+		let mod = this.module;
+		let method = mod[method_name];
 		if(!_.isFunction(method))
-			throw new Error('no such method: ' + method_name);
+			throw new Error(`No method ${method_name} in module ${mod.constructor.name}`);
 
-		return method.call(module, data);
+		return method.call(mod, data);
 	}
 }
 
