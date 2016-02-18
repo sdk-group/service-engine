@@ -59,12 +59,11 @@ class Facehugger extends Abstract {
 
 	handleRequest({
 		action: actname,
-		params: args,
-		id: mid
+		params: args
 	}) {
 		//        console.log("HANDLING REQUEST");
 		return new Promise((resolve, reject) => {
-			if(!actname || !~_.indexOf(this.exposed_api, actname))
+			if (!actname || !~_.indexOf(this.exposed_api, actname))
 				return reject(new Error("MISSING_METHOD"));
 			//Still doesn't feel secure enough
 			return resolve(this._db[actname].apply(this._db, args));
