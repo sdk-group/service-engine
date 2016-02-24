@@ -26,14 +26,14 @@ class Servicify extends Abstract {
 			this.addPermission(permission.name, permission.params);
 		});
 
-		if(config.exposed) {
+		if (config.exposed) {
 			let controller_name = config.name || _.kebabCase(Model.name);
 
 			queue.listenTask(controller_name, (data_and_action) => this.isWorking() ? this.getAction(data_and_action) : FAILURE_MESSAGE);
 		}
 
 		_.forEach(config.tasks, (task) => {
-			if(!(this.module[task.handler] instanceof Function))
+			if (!(this.module[task.handler] instanceof Function))
 				throw new Error('no such method');
 
 			let method = this.module[task.handler].bind(this.module);
@@ -59,7 +59,7 @@ class Servicify extends Abstract {
 
 		let mod = this.module;
 		let method = mod[method_name];
-		if(!_.isFunction(method))
+		if (!_.isFunction(method))
 			throw new Error(`No method ${method_name} in module ${mod.constructor.name}`);
 
 		return method.call(mod, data);
