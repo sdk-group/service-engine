@@ -7,21 +7,11 @@ module.exports = {
 	dbface: {
 		request: 'dbface.request'
 	},
-	booker: {
-		request: "booker.request",
-		pause: "booker.pause",
-		resume: "booker.resume"
-	},
-	broker: {
-		resources: "broker.list.resources"
-	},
 	arbiter: {
 		getup: "arbiter.wake"
 	},
-	sound: {
-		concat: 'sound.concat',
-		transcode: 'sound.transcode.ffmpeg',
-		avtranscode: 'sound.transcode.libav'
+	taskrunner: {
+		add_task: "taskrunner.add_task"
 	},
 	permission: {
 		dropped: function(name, key) {

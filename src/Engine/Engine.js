@@ -15,8 +15,8 @@ class Engine {
 	}
 	static set config(value) {
 		let cfg_ready = false;
-		if(value.config_key && value.bucket) {
-			let loader = Loader(value.bucket);
+		if(value.config_key && value.buckets.config) {
+			let loader = Loader(value.buckets.config);
 			cfg_ready = loader.load({
 					services: value.config_key
 				})
@@ -32,6 +32,10 @@ class Engine {
 
 				this.service_params = _.map(main_group, 'params');
 				this.services = _.map(main_group, (item) => this.createService(item.path));
+				_.map(this.services, (item) => {
+					if(_.isFunction(item.initCouchbird))
+						item.initCouchbird(value.buckets);
+				})
 				return true;
 			})
 			.catch((err) => {
