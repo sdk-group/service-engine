@@ -20,6 +20,7 @@ class Facehugger extends Abstract {
 		this.interval = params.interval || 60000;
 		this.ahead_delta = params.ahead_delta || 1000;
 		this.immediate_delta = params.immediate_delta || 1000;
+		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = "Task";
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		setInterval(() => {
@@ -89,9 +90,9 @@ class Facehugger extends Abstract {
 		task_type,
 		params
 	}) {
-		let key = _.join([this.key, module_name, task_type], '--');
 		let delta = (time - now) * 1000;
 		let stime = _.now() + delta;
+		let key = _.join([this.key, task_type, stime], '--');
 		if (delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
@@ -141,6 +142,7 @@ class Facehugger extends Abstract {
 					return true;
 				})
 				.catch((err) => {
+					console.log("TASK ERRORED");
 					return false;
 				});
 		}
@@ -149,14 +151,14 @@ class Facehugger extends Abstract {
 	runTasks() {
 		let from = _.now();
 		let to = from + this.ahead_delta;
-		from = from - 2 * this.interval;
+		from = from - this.interval - this.ahead_delta;
 		let task_content;
 		return this.getTasks({
 				from,
 				to
 			})
 			.then((tasks) => {
-				console.log("RUNNING TASKS", tasks, from, to);
+				console.log("RUNNING TASKS", _.map(tasks, 'key'));
 				task_content = _.keyBy(tasks, 'key');
 				return Promise.props(_.mapValues(task_content, (task) => {
 					return this.runTask(task);
@@ -166,7 +168,7 @@ class Facehugger extends Abstract {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = task_content[key];
 					task.completed = task_result;
-					return this.storeTask(task);
+					return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
 				}));
 			})
 			.catch((err) => {
