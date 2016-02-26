@@ -11,25 +11,25 @@ module.exports = {
 		getup: "arbiter.wake"
 	},
 	taskrunner: {
-		add_task: "taskrunner.add_task"
+		add_task: "taskrunner.add.task"
 	},
 	permission: {
-		dropped: function(name, key) {
+		dropped: function (name, key) {
 			return 'permission.dropped.' + name + '.' + key;
 		},
-		restored: function(name, key) {
+		restored: function (name, key) {
 			return 'permission.restored.' + name + '.' + key;
 		},
 		request: 'permission.request'
 	},
 	child_process: {
-		init: function(pid) {
+		init: function (pid) {
 			return 'child_process.' + pid + '.init';
 		},
-		system: function(pid) {
+		system: function (pid) {
 			return 'system.child_process.' + pid;
 		},
-		launch: function(pid) {
+		launch: function (pid) {
 			return 'system.child_process.' + pid + '.launch';
 		}
 	}

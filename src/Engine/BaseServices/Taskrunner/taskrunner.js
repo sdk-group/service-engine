@@ -4,7 +4,7 @@ let Abstract = require('../Abstract/abstract.js');
 let path = require("path");
 
 let Couchbird = require("Couchbird");
-let N1QLQuery = Couchbird.N1QLQuery;
+let N1qlQuery = Couchbird.N1qlQuery;
 let db = Couchbird();
 
 class Facehugger extends Abstract {
@@ -56,7 +56,7 @@ class Facehugger extends Abstract {
 	 */
 
 	storeTask({
-		name,
+		key,
 		stime,
 		time,
 		task_name,
@@ -65,7 +65,7 @@ class Facehugger extends Abstract {
 		params,
 		completed = false
 	}) {
-		return this._db.upsert(name, {
+		return this._db.upsert(key, {
 				type: this.task_class,
 				stime,
 				time,
@@ -89,10 +89,10 @@ class Facehugger extends Abstract {
 		task_type,
 		params
 	}) {
-		let name = _.join([this.key, module_name, task_type], '--');
-		let delta = (time - now);
+		let key = _.join([this.key, module_name, task_type], '--');
+		let delta = (time - now) * 1000;
 		let stime = _.now() + delta;
-		if(delta < this.immediate_delta) {
+		if (delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
 					task_name,
@@ -101,7 +101,7 @@ class Facehugger extends Abstract {
 				})
 				.then((res) => {
 					return this.storeTask({
-						name,
+						key,
 						stime,
 						time,
 						task_name,
@@ -113,7 +113,7 @@ class Facehugger extends Abstract {
 				});
 		} else {
 			return this.storeTask({
-				name,
+				key,
 				stime,
 				time,
 				task_name,
@@ -131,7 +131,8 @@ class Facehugger extends Abstract {
 		task_type,
 		params
 	}) {
-		if(task_type == 'emit') {
+		console.log("TASK", task_name, task_type);
+		if (task_type == 'emit') {
 			this.emitter.emit(task_name, params);
 			return Promise.resolve(true);
 		} else {
@@ -148,15 +149,24 @@ class Facehugger extends Abstract {
 	runTasks() {
 		let from = _.now();
 		let to = from + this.ahead_delta;
-		from = from - this.interval;
+		from = from - 2 * this.interval;
+		let task_content;
 		return this.getTasks({
 				from,
 				to
 			})
 			.then((tasks) => {
-				console.log("RUNNING TASKS", tasks);
-				return Promise.props(_.mapValues(tasks, (task) => {
+				console.log("RUNNING TASKS", tasks, from, to);
+				task_content = _.keyBy(tasks, 'key');
+				return Promise.props(_.mapValues(task_content, (task) => {
 					return this.runTask(task);
+				}));
+			})
+			.then((res) => {
+				return Promise.props(_.mapValues(res, (task_result, key) => {
+					let task = task_content[key];
+					task.completed = task_result;
+					return this.storeTask(task);
 				}));
 			})
 			.catch((err) => {
@@ -170,7 +180,7 @@ class Facehugger extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT module_name, task_name, task_type, params FROM ${bname} WHERE type=${this.task_class} AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)}`;
+		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, time, stime, params FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} OR completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
