@@ -53,6 +53,13 @@ class Servicify extends Abstract {
 			});
 	}
 
+	launch() {
+		return super.launch()
+			.then((res) => {
+				return _.isFunction(this.module.launch) ? this.module.launch() : res;
+			});
+	}
+
 	getAction(data) {
 		let kebab = 'action-' + data._action;
 		let method_name = _.camelCase(kebab);

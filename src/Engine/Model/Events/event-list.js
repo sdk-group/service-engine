@@ -11,7 +11,8 @@ module.exports = {
 		getup: "arbiter.wake"
 	},
 	taskrunner: {
-		add_task: "taskrunner.add.task"
+		add_task: "taskrunner.add.task",
+		now: "taskrunner.now"
 	},
 	permission: {
 		dropped: function (name, key) {
