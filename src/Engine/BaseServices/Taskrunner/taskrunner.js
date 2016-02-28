@@ -72,7 +72,7 @@ class Facehugger extends Abstract {
 		params,
 		completed = false
 	}) {
-		console.log("STORING", key, time, stime, task_name, module_name, task_name, params, completed);
+		// console.log("STORING", key, time, stime, task_name, module_name, task_name, params, completed);
 		return this._db.upsert(key, {
 				type: this.task_class,
 				stime,
@@ -98,7 +98,6 @@ class Facehugger extends Abstract {
 		params
 	}) {
 		let delta = (time - now) * 1000;
-		console.log("DELTA", delta);
 		let stime = _.now() + delta;
 		let key = _.join([this.key, task_type, stime], '--');
 		if(delta < this.immediate_delta) {
@@ -141,7 +140,6 @@ class Facehugger extends Abstract {
 		task_type,
 		params
 	}) {
-		console.log("TASK", task_name, task_type);
 		params.ts_now = _.now();
 		if(task_type == 'emit') {
 			this.emitter.emit(task_name, params);
@@ -187,7 +185,7 @@ class Facehugger extends Abstract {
 				});
 			})
 			.then((res) => {
-				console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
+				// console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
 				this.interval = res[0] && res[0].avg ? (res[0].avg - _.now()) : this.default_interval;
 				setTimeout(() => {
 					this.runTasks();
