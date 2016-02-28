@@ -18,6 +18,7 @@ class Facehugger extends Abstract {
 		super.init(params);
 		this.key = params.key || "task";
 		this.interval = params.interval || 60000;
+		this.default_interval = this.interval;
 		this.ahead_delta = params.ahead_delta || 1000;
 		this.immediate_delta = params.immediate_delta || 1000;
 		this.remove_on_completion = params.remove_on_completion || true;
@@ -182,12 +183,12 @@ class Facehugger extends Abstract {
 			})
 			.then((res) => {
 				return this.getNext({
-					from: (_.max(_.concat(_.map(task_content, 'stime')), _.now()))
+					from: (_.max(_.concat(_.map(task_content, 'stime'), _.now())))
 				});
 			})
 			.then((res) => {
 				console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
-				this.interval = res[0] && (res[0].avg - _.now()) || this.interval;
+				this.interval = res[0] && res[0].avg ? (res[0].avg - _.now()) : this.default_interval;
 				setTimeout(() => {
 					this.runTasks();
 				}, this.interval);
