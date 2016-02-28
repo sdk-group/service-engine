@@ -182,7 +182,7 @@ class Facehugger extends Abstract {
 			})
 			.then((res) => {
 				return this.getNext({
-					from: (_.max(_.map(task_content, 'stime')) || _.now())
+					from: (_.max(_.concat(_.map(task_content, 'stime')), _.now()))
 				});
 			})
 			.then((res) => {
