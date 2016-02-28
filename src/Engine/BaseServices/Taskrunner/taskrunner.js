@@ -159,7 +159,7 @@ class Facehugger extends Abstract {
 	runTasks() {
 		let from = _.now();
 		let to = from + this.ahead_delta;
-		from = from - this.interval * 1.5;
+		from = from - this.interval * 2;
 		let task_content;
 		return this.getTasks({
 				from,
