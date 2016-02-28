@@ -71,6 +71,7 @@ class Facehugger extends Abstract {
 		params,
 		completed = false
 	}) {
+		console.log("STORING", key, time, stime, task_name, module_name, task_name, params, completed);
 		return this._db.upsert(key, {
 				type: this.task_class,
 				stime,
@@ -96,6 +97,7 @@ class Facehugger extends Abstract {
 		params
 	}) {
 		let delta = (time - now) * 1000;
+		console.log("DELTA", delta);
 		let stime = _.now() + delta;
 		let key = _.join([this.key, task_type, stime], '--');
 		if (delta < this.immediate_delta) {
@@ -106,16 +108,17 @@ class Facehugger extends Abstract {
 					params
 				})
 				.then((res) => {
-					return this.storeTask({
-						key,
-						stime,
-						time,
-						task_name,
-						module_name,
-						task_type,
-						params,
-						completed: res
-					});
+					return this.remove_on_completion ? Promise.resolve(true) :
+						this.storeTask({
+							key,
+							stime,
+							time,
+							task_name,
+							module_name,
+							task_type,
+							params,
+							completed: res
+						});
 				});
 		} else {
 			return this.storeTask({
@@ -157,18 +160,14 @@ class Facehugger extends Abstract {
 	runTasks() {
 		let from = _.now();
 		let to = from + this.ahead_delta;
-		from = from - this.interval;
+		from = from - this.interval * 1.5;
 		let task_content;
 		return this.getTasks({
 				from,
 				to
 			})
 			.then((tasks) => {
-				setTimeout(() => {
-					this.runTasks();
-				}, _.min(_.map(tasks, 'stime')) || this.interval);
-				console.log("RUNNING TASKS", _.map(tasks, 'key'));
-
+				console.log("RUNNING TASKS", _.map(tasks, 'key'), from, to, this.interval);
 				task_content = _.keyBy(tasks, 'key');
 				return Promise.props(_.mapValues(task_content, (task) => {
 					return this.runTask(task);
@@ -180,6 +179,20 @@ class Facehugger extends Abstract {
 					task.completed = task_result;
 					return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
 				}));
+			})
+			.then((res) => {
+				console.log("AAAAAAA");
+				return this.getNext({
+					from: (_.max(_.map(task_content, 'stime'))
+					} || _.now()));
+			})
+			.then((res) => {
+				console.log("PREV INT", this.interval, res[0] && res[0].avg, res);
+				this.interval = res[0] && (res[0].avg - _.now()) || this.interval;
+				setTimeout(() => {
+					this.runTasks();
+				}, this.interval);
+
 			})
 			.catch((err) => {
 				console.log("ERR RUN TASKS", err.stack);
@@ -197,6 +210,16 @@ class Facehugger extends Abstract {
 		return this._db.N1QL(q);
 	}
 
+	getNext({
+		from,
+		delta
+	}) {
+		console.log("GETTING NXT", from);
+		let bname = this._db.bucket_name;
+		let query = `SELECT AVG(stime) as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 3`;
+		let q = N1qlQuery.fromString(query);
+		return this._db.N1QL(q);
+	}
 }
 
 module.exports = Facehugger;
