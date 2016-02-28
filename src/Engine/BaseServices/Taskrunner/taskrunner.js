@@ -66,6 +66,8 @@ class Facehugger extends Abstract {
 		key,
 		stime,
 		time,
+		task_id,
+		regular,
 		task_name,
 		module_name,
 		task_type,
@@ -78,6 +80,8 @@ class Facehugger extends Abstract {
 				stime,
 				time,
 				task_name,
+				task_id,
+				regular,
 				module_name,
 				task_type,
 				params,
@@ -94,13 +98,14 @@ class Facehugger extends Abstract {
 		time,
 		task_name,
 		task_id,
+		regular,
 		module_name,
 		task_type,
 		params
 	}) {
 		let delta = (time - now) * 1000;
 		let stime = _.now() + delta;
-		let key = _.join([this.key, task_type, (task_id || stime)], '--');
+		let key = _.join([this.key, (task_id || task_type), (regular ? 'regular' : stime)], '--');
 		if(delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
@@ -109,11 +114,13 @@ class Facehugger extends Abstract {
 					params
 				})
 				.then((res) => {
-					return this.remove_on_completion ? Promise.resolve(true) :
+					return this.remove_on_completion && !regular ? Promise.resolve(true) :
 						this.storeTask({
 							key,
 							stime,
 							time,
+							task_id,
+							regular,
 							task_name,
 							module_name,
 							task_type,
@@ -127,6 +134,8 @@ class Facehugger extends Abstract {
 				stime,
 				time,
 				task_name,
+				task_id,
+				regular,
 				module_name,
 				task_type,
 				params
@@ -176,8 +185,8 @@ class Facehugger extends Abstract {
 			.then((res) => {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = task_content[key];
-					task.completed = task_result;
-					return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
+					task.completed = task.regular ? false : task_result;
+					return this.remove_on_completion && task_result && !task.regular ? this._db.remove(key) : this.storeTask(task);
 				}));
 			})
 			.then((res) => {
