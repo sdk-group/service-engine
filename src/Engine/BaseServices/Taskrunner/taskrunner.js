@@ -181,13 +181,12 @@ class Facehugger extends Abstract {
 				}));
 			})
 			.then((res) => {
-				console.log("AAAAAAA");
 				return this.getNext({
 					from: (_.max(_.map(task_content, 'stime'))
 					} || _.now()));
 			})
 			.then((res) => {
-				console.log("PREV INT", this.interval, res[0] && res[0].avg, res);
+				console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
 				this.interval = res[0] && (res[0].avg - _.now()) || this.interval;
 				setTimeout(() => {
 					this.runTasks();
@@ -214,7 +213,6 @@ class Facehugger extends Abstract {
 		from,
 		delta
 	}) {
-		console.log("GETTING NXT", from);
 		let bname = this._db.bucket_name;
 		let query = `SELECT AVG(stime) as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 3`;
 		let q = N1qlQuery.fromString(query);
