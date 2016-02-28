@@ -93,13 +93,14 @@ class Facehugger extends Abstract {
 		now,
 		time,
 		task_name,
+		task_id,
 		module_name,
 		task_type,
 		params
 	}) {
 		let delta = (time - now) * 1000;
 		let stime = _.now() + delta;
-		let key = _.join([this.key, task_type, stime], '--');
+		let key = _.join([this.key, task_type, (task_id || stime)], '--');
 		if(delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
