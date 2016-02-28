@@ -100,7 +100,7 @@ class Facehugger extends Abstract {
 		console.log("DELTA", delta);
 		let stime = _.now() + delta;
 		let key = _.join([this.key, task_type, stime], '--');
-		if (delta < this.immediate_delta) {
+		if(delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
 					task_name,
@@ -142,7 +142,7 @@ class Facehugger extends Abstract {
 	}) {
 		console.log("TASK", task_name, task_type);
 		params.ts_now = _.now();
-		if (task_type == 'emit') {
+		if(task_type == 'emit') {
 			this.emitter.emit(task_name, params);
 			return Promise.resolve(true);
 		} else {
@@ -182,8 +182,8 @@ class Facehugger extends Abstract {
 			})
 			.then((res) => {
 				return this.getNext({
-					from: (_.max(_.map(task_content, 'stime'))
-					} || _.now()));
+					from: (_.max(_.map(task_content, 'stime')) || _.now())
+				});
 			})
 			.then((res) => {
 				console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
