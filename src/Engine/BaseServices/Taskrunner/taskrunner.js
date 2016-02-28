@@ -186,7 +186,7 @@ class Facehugger extends Abstract {
 			})
 			.then((res) => {
 				// console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
-				this.interval = res[0] && res[0].avg ? (res[0].avg - _.now()) : this.default_interval;
+				this.interval = res[0] && res[0].avg ? _.clamp(res[0].avg - _.now(), 0, _.now()) : this.default_interval;
 				setTimeout(() => {
 					this.runTasks();
 				}, this.interval);
