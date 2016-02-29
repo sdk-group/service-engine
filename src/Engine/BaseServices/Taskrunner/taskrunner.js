@@ -125,7 +125,7 @@ class Facehugger extends Abstract {
 							module_name,
 							task_type,
 							params,
-							completed: res
+							completed: res && !regular
 						});
 				});
 		} else {
