@@ -23,6 +23,7 @@ class Facehugger extends Abstract {
 		this.immediate_delta = params.immediate_delta || 1000;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = "Task";
+		this.from = _.now();
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
 		setTimeout(() => {
@@ -167,9 +168,10 @@ class Facehugger extends Abstract {
 	}
 
 	runTasks() {
-		let from = _.now();
+		let from = this.from;;
 		let to = from + this.ahead_delta;
 		from = from - this.interval;
+		this.from = to;
 		let task_content;
 		return this.getTasks({
 				from,
@@ -213,7 +215,7 @@ class Facehugger extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, time, stime, params FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
+		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
@@ -223,7 +225,7 @@ class Facehugger extends Abstract {
 		delta
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT AVG(stime) as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 3`;
+		let query = `SELECT stime as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
