@@ -7,7 +7,7 @@ let Couchbird = require("Couchbird");
 let N1qlQuery = Couchbird.N1qlQuery;
 let db = Couchbird();
 
-class Facehugger extends Abstract {
+class Taskrunner extends Abstract {
 	constructor() {
 		super({
 			event_group: 'taskrunner'
@@ -18,10 +18,12 @@ class Facehugger extends Abstract {
 		super.init(params);
 		this.key = params.key || "task";
 		this.interval = params.interval || 60000;
+		this.default_interval = this.interval;
 		this.ahead_delta = params.ahead_delta || 1000;
 		this.immediate_delta = params.immediate_delta || 1000;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = "Task";
+		this.from = _.now();
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
 		setTimeout(() => {
@@ -65,18 +67,22 @@ class Facehugger extends Abstract {
 		key,
 		stime,
 		time,
+		task_id,
+		regular,
 		task_name,
 		module_name,
 		task_type,
 		params,
 		completed = false
 	}) {
-		console.log("STORING", key, time, stime, task_name, module_name, task_name, params, completed);
+		console.log("STORING", key, stime, params, completed);
 		return this._db.upsert(key, {
 				type: this.task_class,
 				stime,
 				time,
 				task_name,
+				task_id,
+				regular,
 				module_name,
 				task_type,
 				params,
@@ -92,14 +98,15 @@ class Facehugger extends Abstract {
 		now,
 		time,
 		task_name,
+		task_id,
+		regular,
 		module_name,
 		task_type,
 		params
 	}) {
 		let delta = (time - now) * 1000;
-		console.log("DELTA", delta);
 		let stime = _.now() + delta;
-		let key = _.join([this.key, task_type, stime], '--');
+		let key = _.join([this.key, (task_id || task_type), (regular ? 'regular' : stime)], '--');
 		if (delta < this.immediate_delta) {
 			return this.runTask({
 					module_name,
@@ -108,16 +115,18 @@ class Facehugger extends Abstract {
 					params
 				})
 				.then((res) => {
-					return this.remove_on_completion ? Promise.resolve(true) :
+					return this.remove_on_completion && !regular ? Promise.resolve(true) :
 						this.storeTask({
 							key,
 							stime,
 							time,
+							task_id,
+							regular,
 							task_name,
 							module_name,
 							task_type,
 							params,
-							completed: res
+							completed: res && !regular
 						});
 				});
 		} else {
@@ -126,6 +135,8 @@ class Facehugger extends Abstract {
 				stime,
 				time,
 				task_name,
+				task_id,
+				regular,
 				module_name,
 				task_type,
 				params
@@ -140,13 +151,13 @@ class Facehugger extends Abstract {
 		task_type,
 		params
 	}) {
-		console.log("TASK", task_name, task_type);
-		params.ts_now = _.now();
+		let opts = _.cloneDeep(params);
+		opts.ts_now = _.now();
 		if (task_type == 'emit') {
-			this.emitter.emit(task_name, params);
+			this.emitter.emit(task_name, opts);
 			return Promise.resolve(true);
 		} else {
-			return this.emitter.addTask(module_name, params)
+			return this.emitter.addTask(module_name, opts)
 				.then((res) => {
 					return true;
 				})
@@ -158,9 +169,9 @@ class Facehugger extends Abstract {
 	}
 
 	runTasks() {
-		let from = _.now();
-		let to = from + this.ahead_delta;
-		from = from - this.interval * 1.5;
+		let from = this.from;;
+		let to = _.now() + this.ahead_delta;
+		this.from = to;
 		let task_content;
 		return this.getTasks({
 				from,
@@ -176,18 +187,18 @@ class Facehugger extends Abstract {
 			.then((res) => {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = task_content[key];
-					task.completed = task_result;
-					return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
+					task.completed = !task.regular && task_result;
+					return this.remove_on_completion && task_result && !task.regular ? this._db.remove(key) : this.storeTask(task);
 				}));
 			})
 			.then((res) => {
 				return this.getNext({
-					from: (_.max(_.map(task_content, 'stime'))
-					} || _.now()));
+					from: this.from
+				});
 			})
 			.then((res) => {
-				console.log("PREV INT", res[0] ? (res[0].avg - _.now()) : this.interval, res);
-				this.interval = res[0] ? (res[0].avg - _.now()) : this.interval;
+				// console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
+				this.interval = res[0] && res[0].avg ? _.clamp(res[0].avg - _.now(), 0, _.now()) : this.default_interval;
 				setTimeout(() => {
 					this.runTasks();
 				}, this.interval);
@@ -204,7 +215,7 @@ class Facehugger extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, time, stime, params FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
+		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE type='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
@@ -214,10 +225,10 @@ class Facehugger extends Abstract {
 		delta
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT AVG(stime) as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 3`;
+		let query = `SELECT stime as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
 }
 
-module.exports = Facehugger;
+module.exports = Taskrunner;
