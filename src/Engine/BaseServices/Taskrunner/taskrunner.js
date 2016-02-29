@@ -187,8 +187,13 @@ class Taskrunner extends Abstract {
 			.then((res) => {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = task_content[key];
-					task.completed = !task.regular && task_result;
-					return this.remove_on_completion && task_result && !task.regular ? this._db.remove(key) : this.storeTask(task);
+					//regular task manages itself
+					if (task.regular) {
+						return Promise.resolve(true);
+					} else {
+						task.completed = task_result;
+						return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
+					}
 				}));
 			})
 			.then((res) => {
