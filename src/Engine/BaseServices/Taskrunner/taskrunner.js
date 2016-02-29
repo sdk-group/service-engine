@@ -7,7 +7,7 @@ let Couchbird = require("Couchbird");
 let N1qlQuery = Couchbird.N1qlQuery;
 let db = Couchbird();
 
-class Facehugger extends Abstract {
+class Taskrunner extends Abstract {
 	constructor() {
 		super({
 			event_group: 'taskrunner'
@@ -215,7 +215,7 @@ class Facehugger extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
+		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE type='${this.task_class}'  AND stime < ${_.parseInt(to)} AND completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
@@ -231,4 +231,4 @@ class Facehugger extends Abstract {
 	}
 }
 
-module.exports = Facehugger;
+module.exports = Taskrunner;
