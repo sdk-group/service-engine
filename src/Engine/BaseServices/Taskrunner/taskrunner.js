@@ -75,7 +75,7 @@ class Taskrunner extends Abstract {
 		params,
 		completed = false
 	}) {
-		console.log("STORING", key, stime, params, completed);
+		// console.log("STORING", key, stime, params, completed);
 		return this._db.upsert(key, {
 				type: this.task_class,
 				stime,
@@ -178,7 +178,7 @@ class Taskrunner extends Abstract {
 				to
 			})
 			.then((tasks) => {
-				console.log("RUNNING TASKS", _.map(tasks, 'key'), from, to, this.interval);
+				// console.log("RUNNING TASKS", _.map(tasks, 'key'), from, to, this.interval);
 				task_content = _.keyBy(tasks, 'key');
 				return Promise.props(_.mapValues(task_content, (task) => {
 					return this.runTask(task);
