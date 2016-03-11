@@ -107,7 +107,7 @@ class Taskrunner extends Abstract {
 		let delta = (time - now) * 1000;
 		let stime = _.now() + delta;
 		let key = _.join([this.key, (task_id || task_type), (regular ? 'regular' : stime)], '--');
-		if (delta < this.immediate_delta) {
+		if (delta < this.immediate_delta || delta < 0) {
 			return this.runTask({
 					module_name,
 					task_name,
