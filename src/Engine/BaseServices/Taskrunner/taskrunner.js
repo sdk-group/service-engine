@@ -77,7 +77,8 @@ class Taskrunner extends Abstract {
 	}) {
 		// console.log("STORING", key, stime, params, completed);
 		return this._db.upsert(key, {
-				type: this.task_class,
+				"@id": key,
+				"@type": this.task_class,
 				stime,
 				time,
 				task_name,
@@ -220,7 +221,7 @@ class Taskrunner extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT meta().id as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE type='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
+		let query = `SELECT \`@id\` as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM ${bname} WHERE \`@type\`='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
@@ -230,7 +231,7 @@ class Taskrunner extends Abstract {
 		delta
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT stime as avg FROM ${bname} WHERE type='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
+		let query = `SELECT stime as avg FROM ${bname} WHERE \`@type\`='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
