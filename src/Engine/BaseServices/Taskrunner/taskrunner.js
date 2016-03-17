@@ -97,6 +97,7 @@ class Taskrunner extends Abstract {
 
 	addTask({
 		now,
+		ahead = true,
 		time,
 		task_name,
 		task_id,
@@ -105,8 +106,10 @@ class Taskrunner extends Abstract {
 		task_type,
 		params
 	}) {
-		let delta = (time - now) * 1000;
+		let delta = time * 1000;
 		let stime = _.now() + delta;
+		if (!ahead)
+			stime = stime + this.ahead_delta;
 		let key = _.join([this.key, (task_id || task_type), (regular ? 'regular' : stime)], '--');
 		// console.log("ADDING TASK", time, task_name, task_id, task_type, module_name, params, stime);
 		if (delta < this.immediate_delta || delta < 0) {
