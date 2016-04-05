@@ -192,6 +192,8 @@ class Taskrunner extends Abstract {
 		this.from = to;
 		let task_content;
 
+		// let tm;
+		// let diff;
 
 		return this.getTasks({
 				from,
@@ -217,13 +219,17 @@ class Taskrunner extends Abstract {
 				}));
 			})
 			.then((res) => {
+				// tm = process.hrtime();
 				return this.getNext({
 					from: this.from
 				});
 			})
 			.then((res) => {
+				// diff = process.hrtime(tm);
+				// console.log('GETNEXT ns', diff[0] * 1e9 + diff[1]);
 				// console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
 				this.interval = res[0] && res[0].avg ? _.clamp(res[0].avg - _.now(), 0, _.now()) : this.default_interval;
+				// console.log("CURR INT", this.interval);
 				setTimeout(() => {
 					this.runTasks();
 				}, this.interval);
