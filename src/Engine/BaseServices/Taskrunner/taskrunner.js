@@ -89,6 +89,19 @@ class Taskrunner extends Abstract {
 				params,
 				completed
 			})
+			.then((res) => {
+				return this.getNext({
+					from: this.from
+				});
+			})
+			.then((res) => {
+				this.interval = res[0] && res[0].avg ? _.clamp(_.min([res[0].avg, stime]) - _.now(), 0, _.now()) : this.default_interval;
+				// console.log("CURR INT", this.interval, stime, res[0].avg, _.now(), task_name, task_type, module_name);
+				setTimeout(() => {
+					this.runTasks();
+				}, this.interval);
+
+			})
 			.catch((err) => {
 				console.log("ERR STORING TASK", err.stack);
 				return false;
@@ -178,6 +191,8 @@ class Taskrunner extends Abstract {
 		let to = _.now() + this.ahead_delta;
 		this.from = to;
 		let task_content;
+
+
 		return this.getTasks({
 				from,
 				to
@@ -225,7 +240,7 @@ class Taskrunner extends Abstract {
 		to
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT \`@id\` as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM \`${bname}\` WHERE \`@type\`='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
+		let query = `SELECT \`@id\` as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM \`${bname}\` USE INDEX (\`task-index\` USING GSI) WHERE \`@type\`='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
@@ -235,7 +250,7 @@ class Taskrunner extends Abstract {
 		delta
 	}) {
 		let bname = this._db.bucket_name;
-		let query = `SELECT stime as avg FROM \`${bname}\` WHERE \`@type\`='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
+		let query = `SELECT stime as avg FROM \`${bname}\` USE INDEX (\`task-index\` USING GSI)WHERE \`@type\`='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
 		let q = N1qlQuery.fromString(query);
 		return this._db.N1QL(q);
 	}
