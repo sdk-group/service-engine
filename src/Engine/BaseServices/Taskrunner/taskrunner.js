@@ -73,11 +73,13 @@ class Taskrunner extends Abstract {
 		params,
 		completed = false
 	}) {
+		let identifier = `${module_name}-${task_type}-${task_name}-${params._action}`;
 		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
 		let cnt_key = `counter-${key}`;
 		let task = {
 			"@id": key,
 			"@type": this.task_class,
+			identifier,
 			stime,
 			time,
 			task_name,
@@ -187,52 +189,34 @@ class Taskrunner extends Abstract {
 
 	runTasks() {
 		let from = this.from;;
-		let to = _.now() + this.ahead_delta;
-		this.from = to;
-		let task_content;
+		let to = this.to = _.now() + this.ahead_delta;
 
+		let task_content;
 		// let tm;
 		// let diff;
 
-		return this.getTasks({
-				from,
-				to
-			})
+		return this.getTasks()
 			.then((tasks) => {
-				// console.log("RUNNING TASKS", _.map(tasks, 'key'), from, to, this.interval);
-				task_content = _.keyBy(tasks, 'key');
+				console.log("RUNNING TASKS", _.map(tasks, '@id'), from, to, this.t_interval);
+				task_content = _(tasks)
+					.filter((task) => {
+						return (task.stime > from && task.stime < to && !task.completed);
+					})
+					.value();
+				console.log("TASK CONTENT", task_content);
 				return Promise.props(_.mapValues(task_content, (task) => {
 					return this.runTask(task);
 				}));
 			})
 			.then((res) => {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
-					let task = task_content[key];
-					//regular task manages itself
-					if (task.regular) {
-						return Promise.resolve(true);
-					} else {
-						task.completed = task_result;
-						return this.remove_on_completion && task_result ? this._db.remove(key) : this.storeTask(task);
-					}
+					let task = _.cloneDeep(task_content[key]);
+					task.completed = task_result;
+					return this.remove_on_completion ? this._db.remove(key) : this.storeTask(task);
 				}));
 			})
 			.then((res) => {
-				// tm = process.hrtime();
-				return this.getNext({
-					from: this.from
-				});
-			})
-			.then((res) => {
-				// diff = process.hrtime(tm);
-				// console.log('GETNEXT ns', diff[0] * 1e9 + diff[1]);
-				// console.log("PREV INT", this.interval, res[0] && (res[0].avg - _.now()), res);
-				this.interval = res[0] && res[0].avg ? _.clamp(res[0].avg - _.now(), 0, _.now()) : this.default_interval;
-				// console.log("CURR INT", this.interval);
-				setTimeout(() => {
-					this.runTasks();
-				}, this.interval);
-
+				return this.settleNext();
 			})
 			.catch((err) => {
 				console.log("ERR RUN TASKS", err.stack);
@@ -240,24 +224,53 @@ class Taskrunner extends Abstract {
 			});
 	}
 
-	getTasks({
-		from,
-		to
-	}) {
-		let bname = this._db.bucket_name;
-		let query = `SELECT \`@id\` as \`key\`, module_name, task_name, task_type, regular, time, stime, params FROM \`${bname}\` USE INDEX (\`task-index\` USING GSI) WHERE \`@type\`='${this.task_class}'  AND stime > ${_.parseInt(from)} AND stime < ${_.parseInt(to)} AND completed=false`;
-		let q = N1qlQuery.fromString(query);
-		return this._db.N1QL(q);
+	getTasks() {
+		let intervals = _.range(_.parseInt(this.from / this.interval), _.parseInt(_.now() / this.interval) + 1);
+		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
+
+		return this._db.getNodes(cnt_keys)
+			.then(counters => {
+				let keys = [];
+				_(counters)
+					.map((res, cnt_key) => {
+						if (!res) return;
+						let nums = res.value + 1;
+						let key = _(cnt_key)
+							.split('-')
+							.slice(1)
+							.join('-');
+						keys = _.concat(keys, _.map(_.range(nums), (num) => `${key}-${num}`));
+					})
+					.value();
+				return this._db.getNodes(keys);
+			})
+			.then((tasks) => {
+				return _(tasks)
+					.values()
+					.compact()
+					.map('value')
+					.sortBy('stime')
+					.value();
+			});
 	}
 
-	getNext({
-		from,
-		delta
-	}) {
-		let bname = this._db.bucket_name;
-		let query = `SELECT stime as avg FROM \`${bname}\` USE INDEX (\`task-index\` USING GSI)WHERE \`@type\`='${this.task_class}' AND stime > ${_.parseInt(from)} AND completed=false ORDER BY stime ASC LIMIT 1`;
-		let q = N1qlQuery.fromString(query);
-		return this._db.N1QL(q);
+	settleNext() {
+		return this.getTasks()
+			.then((tasks) => {
+				let last = _(tasks)
+					.map('stime')
+					.map(_.parseInt)
+					.sortBy()
+					.find(t => (t > this.to));
+				console.log("NEXT", last);
+				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
+				this.t_interval = _.min([next_mark, last]) - _.now();
+				this.from = this.to;
+				this.timer = setTimeout(() => {
+					this.runTasks();
+				}, this.t_interval);
+				return Promise.resolve(true);
+			});
 	}
 }
 
