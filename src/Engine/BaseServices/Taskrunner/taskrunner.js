@@ -4,7 +4,6 @@ let Abstract = require('../Abstract/abstract.js');
 let path = require("path");
 
 let Couchbird = require("Couchbird");
-let N1qlQuery = Couchbird.N1qlQuery;
 let db = Couchbird();
 
 class Taskrunner extends Abstract {
