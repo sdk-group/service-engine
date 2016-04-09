@@ -27,6 +27,7 @@ class Taskrunner extends Abstract {
 
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
+		this.emitter.listenTask(this.event_names.add_task, (data) => this.addTask(data));
 
 		this._db = db.bucket(cfg.buckets.main);
 
@@ -89,7 +90,7 @@ class Taskrunner extends Abstract {
 			params,
 			completed
 		};
-		console.log("STORING", key, stime, params, completed);
+		// console.log("STORING", key, stime, params, completed);
 
 		return this._db.counter(cnt_key, 1, {
 				initial: 0
@@ -97,17 +98,6 @@ class Taskrunner extends Abstract {
 			.then((res) => {
 				task['@id'] = `${key}-${(res.value || 0)}`;
 				return this._db.insertNodes(task);
-			})
-			.then((res) => {
-				console.log("GOT CURR INT", this.t_interval, res);
-				if (this.from > stime) {
-					this.t_interval = stime - _.now();
-					console.log("SET CURR INT", this.t_interval, res);
-					clearTimeout(this.timer);
-					this.timer = setTimeout(() => {
-						this.runTasks();
-					}, this.t_interval);
-				}
 			})
 			.catch((err) => {
 				console.log("ERR STORING TASK", err.stack);
@@ -129,7 +119,7 @@ class Taskrunner extends Abstract {
 		let stime = _.now() + delta;
 		if (!ahead)
 			stime = stime + this.ahead_delta;
-		console.log("ADDING TASK", time, task_name, task_type, module_name, params, stime);
+		// console.log("ADDING TASK", time, task_name, task_type, module_name, params, stime);
 		if (delta < this.immediate_delta || delta < 0) {
 			return this.runTask({
 					module_name,
@@ -151,15 +141,21 @@ class Taskrunner extends Abstract {
 						});
 				});
 		} else {
+			let t_id;
 			return this.storeTask({
-				stime,
-				time,
-				task_name,
-				solo,
-				module_name,
-				task_type,
-				params
-			});
+					stime,
+					time,
+					task_name,
+					solo,
+					module_name,
+					task_type,
+					params
+				})
+				.then((res) => {
+					t_id = _.keys(res)[0];
+					return this.settleNext();
+				})
+				.then(res => t_id);
 		}
 
 	}
@@ -197,15 +193,29 @@ class Taskrunner extends Abstract {
 
 		return this.getTasks()
 			.then((tasks) => {
-				console.log("RUNNING TASKS", _.map(tasks, '@id'), from, to, this.t_interval);
+				// console.log("RUNNING TASKS", _.map(tasks, '@id'), from, to, this.t_interval);
+				let same = [];
 				task_content = _(tasks)
 					.filter((task) => {
-						return (task.stime > from && task.stime < to && !task.completed);
+						return (task.stime < to && !task.completed);
 					})
+					.map((task) => {
+						same = _(tasks)
+							.filter(t => {
+								return (task.identifier = t.identifier && task.solo && task['@id'] != t['@id']);
+							})
+							.map('@id')
+							.concat(same)
+							.uniq()
+							.value();
+						return task;
+					})
+					.keyBy('@id')
 					.value();
-				console.log("TASK CONTENT", task_content);
+				// console.log("SAME", same);
+				// console.log("TASK CONTENT", task_content);
 				return Promise.props(_.mapValues(task_content, (task) => {
-					return this.runTask(task);
+					return !~_.indexOf(same, task['@id']) ? this.runTask(task) : Promise.resolve(true);
 				}));
 			})
 			.then((res) => {
@@ -262,10 +272,11 @@ class Taskrunner extends Abstract {
 					.map(_.parseInt)
 					.sortBy()
 					.find(t => (t > this.to));
-				console.log("NEXT", last);
 				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
-				this.t_interval = _.min([next_mark, last]) - _.now();
+				this.t_interval = (last || next_mark) - _.now();
 				this.from = this.to;
+				// console.log("NEXT", last, next_mark, this.t_interval);
+				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
 					this.runTasks();
 				}, this.t_interval);
