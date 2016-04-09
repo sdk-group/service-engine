@@ -1,12 +1,9 @@
 'use strict'
 
-let Promise = require('bluebird');
-let _ = require('lodash');
-
 let EventRegistry = require('../../EventRegistry.js');
 
 let PermissionLogic = require('./permission-logic.js');
-let queue = require('global-queue');
+let queue = require("global-queue");
 
 /**
  * Abstract service
@@ -28,24 +25,24 @@ class AbstractService {
 	}
 
 	state(name) {
-		if(!name) return this.state_id;
+		if (!name) return this.state_id;
 
 		this.state_id = name.toLowerCase();
 
-		switch(this.state_id) {
-			case 'created':
-				break;
-			case 'init':
-				break;
-			case 'waiting':
-				break;
-			case 'working':
-				break;
-			case 'paused':
-				break;
-			default:
-				throw new Error('unknown state');
-				break;
+		switch (this.state_id) {
+		case 'created':
+			break;
+		case 'init':
+			break;
+		case 'waiting':
+			break;
+		case 'working':
+			break;
+		case 'paused':
+			break;
+		default:
+			throw new Error('unknown state');
+			break;
 		}
 
 		return this;
@@ -63,7 +60,7 @@ class AbstractService {
 			.then((result) => {
 				this.state('waiting');
 
-				if(result === true) {
+				if (result === true) {
 					console.log('%s: can start now', this.getName());
 					this.start();
 				} else {
@@ -86,10 +83,10 @@ class AbstractService {
 	init(config) {
 		this.config = config || {};
 
-		if(!this.emitter) return Promise.reject('%s: U should set channels before', this.getName());
+		if (!this.emitter) return Promise.reject('%s: U should set channels before', this.getName());
 
 		this.required_permissions.dropped(() => {
-			if(this.state() === 'working') {
+			if (this.state() === 'working') {
 				console.log('%s: oh no, so bad', this.getName());
 				this.pause();
 				this.state('waiting');
@@ -97,7 +94,7 @@ class AbstractService {
 		});
 
 		this.required_permissions.restored(() => {
-			if(this.state() === 'waiting') {
+			if (this.state() === 'waiting') {
 				this.start();
 				console.log('%s: excellent...', this.getName());
 			}
@@ -111,7 +108,7 @@ class AbstractService {
 	start() {
 		//@TODO: What should it do in current context?
 		//@TODO: requestPermissions() here
-		if(this.state() === 'working') throw new Error('Running already!');
+		if (this.state() === 'working') throw new Error('Running already!');
 		this.state('working');
 
 		return this;

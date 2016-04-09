@@ -2,7 +2,6 @@
 
 let AbstractService = require('./BaseServices/Abstract');
 let Servicify = require('./BaseServices/Servicify');
-let queue = require("global-queue");
 let Loader = require('../config/loader');
 
 let discover = function (path_string) {
@@ -32,16 +31,13 @@ class Engine {
 
 				this.service_params = _.map(main_group, 'params');
 				this.services = _.map(main_group, (item) => this.createService(item.path));
-				_.map(this.services, (item) => {
-					if (_.isFunction(item.initCouchbird))
-						item.initCouchbird(value.buckets);
-				})
 				return true;
 			})
 			.catch((err) => {
 				console.error(err.stack);
 				return false;
 			});
+		this.cfg = value;
 	}
 	static createService(path) {
 		let ServiceModel = discover(path);
@@ -50,12 +46,12 @@ class Engine {
 	static launch() {
 		return this.cfg_ready
 			.then((res) => {
-				let init = _.map(this.services, (service, index) => service.init(this.service_params[index]));
+				let init = _.map(this.services, (service, index) => service.init(this.service_params[index], this.cfg));
 				return Promise.all(init);
 			})
 			.then(() => Promise.all(_.map(this.services, (service) => service.launch())))
 			.then((r) => {
-				queue.emit('engine.ready', {
+				message_bus.emit('engine.ready', {
 					status: r
 				});
 				return r;

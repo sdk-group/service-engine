@@ -3,32 +3,23 @@ let Abstract = require('../Abstract/abstract.js');
 
 let path = require("path");
 
-let Couchbird = require("Couchbird");
-
-let DB_Face = Couchbird();
+let RDFcb = require("cbird-rdf")
+	.RD;
+let db = new RDFcb();
 
 class Facehugger extends Abstract {
 	constructor() {
 		super({
-			event_group: 'dbface'
+			event_group: 'facehugger'
 		});
-
-
-		this.errname = Error.name;
 	}
 
 	init(params) {
 		super.init(params);
 
-		this._db = DB_Face.bucket(params.bucket_name);
-		this.exposed_api = _.chain(this._db)
-			.functions()
-			.filter((name) => {
-				return !_.startsWith(name, "_");
-			})
-			.value();
-
+		this._db = db;
 		this.emitter.listenTask(this.event_names.request, (data) => this.handleRequest(data));
+		this.emitter.listenTask(this.event_names.bucket, (data) => this.bucket(data));
 
 		return Promise.resolve(true);
 	}
@@ -58,15 +49,21 @@ class Facehugger extends Abstract {
 	 */
 
 	handleRequest({
-		action: actname,
-		params: args
+		bucket_name,
+		action,
+		params
 	}) {
 		//        console.log("HANDLING REQUEST");
+		let bucket = this._db.bucket(bucket_name);
+		let exposed_api = _.chain(bucket)
+			.functions()
+			.filter((name) => !_.startsWith(name, "_"))
+			.value();
+
 		return new Promise((resolve, reject) => {
-			if (!actname || !~_.indexOf(this.exposed_api, actname))
+			if (!action || !~_.indexOf(exposed_api, action))
 				return reject(new Error("MISSING_METHOD"));
-			//Still doesn't feel secure enough
-			return resolve(this._db[actname].apply(this._db, args));
+			return resolve(bucket[actname].apply(bucket, params));
 		});
 	}
 }

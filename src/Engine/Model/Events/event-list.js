@@ -14,6 +14,9 @@ module.exports = {
 		add_task: "taskrunner.add.task",
 		now: "taskrunner.now"
 	},
+	facehugger: {
+		request: 'facehugger.request'
+	},
 	permission: {
 		dropped: function (name, key) {
 			return 'permission.dropped.' + name + '.' + key;

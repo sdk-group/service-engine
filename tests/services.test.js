@@ -1,7 +1,7 @@
 'use strict'
 
 
-let queue = require('global-queue');
+let queue = require("global-queue");
 
 
 describe.only("Response-Request", () => {

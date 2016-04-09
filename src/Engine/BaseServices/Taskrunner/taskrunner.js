@@ -14,27 +14,27 @@ class Taskrunner extends Abstract {
 		});
 	}
 
-	init(params) {
+	init(params, cfg) {
 		super.init(params);
 		this.key = params.key || "task";
-		this.interval = params.interval || 60000;
-		this.default_interval = this.interval;
+		this.interval = (params.interval || 60) * 60000;
+		this.t_interval = this.interval;
 		this.ahead_delta = params.ahead_delta || 1000;
-		this.immediate_delta = params.immediate_delta || 1000;
+		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
-		this.task_class = "Task";
+		this.task_class = _.upperFirst(_.camelCase(this.key));
 		this.from = _.now();
+
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
-		setTimeout(() => {
-			this.runTasks();
-		}, this.interval);
+
+		this._db = db.bucket(cfg.buckets.main);
+
+		this.runTasks();
+
 		return Promise.resolve(true);
 	}
 
-	initCouchbird(buckets) {
-		this._db = db.bucket(buckets.main);
-	}
 	start() {
 		super.start();
 		console.log("Taskrunner: started");
@@ -64,43 +64,48 @@ class Taskrunner extends Abstract {
 	}
 
 	storeTask({
-		key,
 		stime,
+		solo = false,
 		time,
-		task_id,
-		regular,
 		task_name,
 		module_name,
 		task_type,
 		params,
 		completed = false
 	}) {
-		// console.log("STORING", key, stime, params, completed);
-		return this._db.upsert(key, {
-				"@id": key,
-				"@type": this.task_class,
-				stime,
-				time,
-				task_name,
-				task_id,
-				regular,
-				module_name,
-				task_type,
-				params,
-				completed
-			})
-			.then((res) => {
-				return this.getNext({
-					from: this.from
-				});
-			})
-			.then((res) => {
-				this.interval = res[0] && res[0].avg ? _.clamp(_.min([res[0].avg, stime]) - _.now(), 0, _.now()) : this.default_interval;
-				// console.log("CURR INT", this.interval, stime, res[0].avg, _.now(), task_name, task_type, module_name);
-				setTimeout(() => {
-					this.runTasks();
-				}, this.interval);
+		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
+		let cnt_key = `counter-${key}`;
+		let task = {
+			"@id": key,
+			"@type": this.task_class,
+			stime,
+			time,
+			task_name,
+			solo,
+			module_name,
+			task_type,
+			params,
+			completed
+		};
+		console.log("STORING", key, stime, params, completed);
 
+		return this._db.counter(cnt_key, 1, {
+				initial: 0
+			})
+			.then((res) => {
+				task['@id'] = `${key}-${(res.value || 0)}`;
+				return this._db.insertNodes(task);
+			})
+			.then((res) => {
+				console.log("GOT CURR INT", this.t_interval, res);
+				if (this.from > stime) {
+					this.t_interval = stime - _.now();
+					console.log("SET CURR INT", this.t_interval, res);
+					clearTimeout(this.timer);
+					this.timer = setTimeout(() => {
+						this.runTasks();
+					}, this.t_interval);
+				}
 			})
 			.catch((err) => {
 				console.log("ERR STORING TASK", err.stack);
@@ -113,8 +118,7 @@ class Taskrunner extends Abstract {
 		ahead = true,
 		time,
 		task_name,
-		task_id,
-		regular,
+		solo,
 		module_name,
 		task_type,
 		params
@@ -123,8 +127,7 @@ class Taskrunner extends Abstract {
 		let stime = _.now() + delta;
 		if (!ahead)
 			stime = stime + this.ahead_delta;
-		let key = _.join([this.key, (task_id || task_type), (regular ? 'regular' : stime)], '--');
-		// console.log("ADDING TASK", time, task_name, task_id, task_type, module_name, params, stime);
+		console.log("ADDING TASK", time, task_name, task_type, module_name, params, stime);
 		if (delta < this.immediate_delta || delta < 0) {
 			return this.runTask({
 					module_name,
@@ -133,28 +136,24 @@ class Taskrunner extends Abstract {
 					params
 				})
 				.then((res) => {
-					return this.remove_on_completion && !regular ? Promise.resolve(true) :
+					return this.remove_on_completion ? Promise.resolve(true) :
 						this.storeTask({
-							key,
 							stime,
 							time,
-							task_id,
-							regular,
+							solo,
 							task_name,
 							module_name,
 							task_type,
 							params,
-							completed: res && !regular
+							completed: res
 						});
 				});
 		} else {
 			return this.storeTask({
-				key,
 				stime,
 				time,
 				task_name,
-				task_id,
-				regular,
+				solo,
 				module_name,
 				task_type,
 				params

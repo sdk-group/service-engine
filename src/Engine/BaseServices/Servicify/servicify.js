@@ -1,7 +1,7 @@
 'use strict'
 
 let _ = require('lodash');
-let queue = require('global-queue');
+let queue = require("global-queue");
 
 let Abstract = require('../Abstract');
 //@FIXIT: not implemented yet
@@ -21,6 +21,7 @@ class Servicify extends Abstract {
 
 		let Model = config.module;
 		this.module = new Model();
+		this.module.emitter = queue;
 
 		_.forEach(config.permissions, (permission) => {
 			this.addPermission(permission.name, permission.params);

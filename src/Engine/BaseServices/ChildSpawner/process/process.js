@@ -1,7 +1,7 @@
 'use strict'
 let boot = require('./boot.js');
 
-let queue = require('global-queue');
+let queue = require("global-queue");
 
 queue.addAdapter('ipc', process);
 
