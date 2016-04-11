@@ -15,7 +15,7 @@ class Taskrunner extends Abstract {
 
 	init(params, cfg) {
 		super.init(params);
-		this.key = params.key || "task";
+		this.key = _.kebabCase(params.key) || "task";
 		this.interval = (params.interval || 60) * 60000;
 		this.t_interval = this.interval;
 		this.ahead_delta = params.ahead_delta || 1000;
