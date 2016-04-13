@@ -53,7 +53,7 @@ class ServicePermissionUtils {
 				} else {
 					let details = result.details;
 
-					for(let i = 0; i < details.length; i += 1) {
+					for(var i = 0; i < details.length; i += 1) {
 						if(!details[i].valid) {
 							this.service_permissions[i].drop();
 						}
@@ -111,7 +111,7 @@ class ServicePermissionUtils {
 	}
 
 	isAllUp() {
-		for(let i = 0; i < this.service_permissions.length; i += 1) {
+		for(var i = 0; i < this.service_permissions.length; i += 1) {
 			if(this.service_permissions[i].isDropped()) return false;
 		}
 		return true;

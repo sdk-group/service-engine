@@ -22,7 +22,9 @@ class Taskrunner extends Abstract {
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = _.upperFirst(_.camelCase(this.key));
-		this.from = _.now();
+		this.from = _.parseInt(moment()
+			.startOf('day')
+			.format('x'));
 
 		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
@@ -66,12 +68,12 @@ class Taskrunner extends Abstract {
 	storeTask({
 		stime,
 		solo = false,
-		time,
-		task_name,
-		module_name,
-		task_type,
-		params,
-		completed = false
+			time,
+			task_name,
+			module_name,
+			task_type,
+			params,
+			completed = false
 	}) {
 		let identifier = `${module_name}-${task_type}-${task_name}-${params._action}`;
 		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
@@ -107,12 +109,12 @@ class Taskrunner extends Abstract {
 	addTask({
 		now,
 		ahead = true,
-		time,
-		task_name,
-		solo,
-		module_name,
-		task_type,
-		params
+			time,
+			task_name,
+			solo,
+			module_name,
+			task_type,
+			params
 	}) {
 		let delta = time * 1000;
 		let stime = _.now() + delta;
@@ -221,6 +223,7 @@ class Taskrunner extends Abstract {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = _.cloneDeep(task_content[key]);
 					task.completed = task_result;
+					// console.log("TS", task, this.remove_on_completion)
 					return this.remove_on_completion ? this._db.remove(key) : this.storeTask(task);
 				}));
 			})

@@ -61,7 +61,7 @@ class Auth extends Abstract {
 		};
 
 		let len = asked_permissions.length;
-		for(let i = 0; i < len; i += 1) {
+		for(var i = 0; i < len; i += 1) {
 			let name = asked_permissions[i].permission;
 			let key = asked_permissions[i].key;
 			let info = {
