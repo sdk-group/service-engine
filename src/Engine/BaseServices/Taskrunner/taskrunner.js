@@ -22,13 +22,16 @@ class Taskrunner extends Abstract {
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = _.upperFirst(_.camelCase(this.key));
+		this.task_expiration = _.parseInt(params.task_expiration) || 0;
 		this.from = _.parseInt(moment()
 			.startOf('day')
 			.format('x'));
 
-		this.emitter.on(this.event_names.add_task, (data) => this.addTask(data));
+		this.emitter.on(this.event_names.add_task, (data) => this.runOrScheduleTask(data));
+		this.emitter.on(this.event_names.cancel_task, (data) => this.cancelTask(data));
 		this.emitter.listenTask(this.event_names.now, (data) => this.now());
-		this.emitter.listenTask(this.event_names.add_task, (data) => this.addTask(data));
+		this.emitter.listenTask(this.event_names.add_task, (data) => this.runOrScheduleTask(data));
+		this.emitter.listenTask(this.event_names.cancel_task, (data) => this.cancelTask(data));
 
 		this._db = db.bucket(cfg.buckets.main);
 
@@ -65,40 +68,20 @@ class Taskrunner extends Abstract {
 		return Promise.resolve(_.now());
 	}
 
-	storeTask({
-		stime,
-		solo = false,
-			time,
-			task_name,
-			module_name,
-			task_type,
-			params,
-			completed = false
-	}) {
-		let identifier = `${module_name}-${task_type}-${task_name}-${params._action}`;
-		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
-		let cnt_key = `counter-${key}`;
-		let task = {
-			"@id": key,
-			"@type": this.task_class,
-			identifier,
-			stime,
-			time,
-			task_name,
-			solo,
-			module_name,
-			task_type,
-			params,
-			completed
-		};
-		// console.log("STORING", key, stime, params, completed);
+	storeTask(task) {
+		let cnt_key = `counter-${task['@id']}`;
 
 		return this._db.counter(cnt_key, 1, {
 				initial: 0
 			})
 			.then((res) => {
-				task['@id'] = `${key}-${(res.value || 0)}`;
-				return this._db.insertNodes(task);
+				task['@id'] = `${task['@id']}-${(res.value || 0)}`;
+				let opts = {};
+				opts[task['@id']] = {
+					expiry: this.task_expiration
+				};
+				console.log("STORING", task, cnt_key);
+				return this._db.insertNodes(task, opts);
 			})
 			.catch((err) => {
 				console.log("ERR STORING TASK", err.stack);
@@ -106,59 +89,166 @@ class Taskrunner extends Abstract {
 			});
 	}
 
-	addTask({
-		now,
-		ahead = true,
-			time,
-			task_name,
-			solo,
-			module_name,
-			task_type,
-			params
+	completeTask({
+		task,
+		result,
+		existent = true
 	}) {
-		let delta = time * 1000;
-		let stime = _.now() + delta;
-		if (!ahead)
-			stime = stime + this.ahead_delta;
-		// console.log("ADDING TASK", time, task_name, task_type, module_name, params, stime);
+		task.completed = result;
+		// console.log("COMPLETED TASK", task, result, existent, this.remove_on_completion);
+		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
+	}
+
+	debounceTask(task) {
+		return this.getTaskLookup(task)
+			.then((previous_task) => {
+				console.log("______________________________________________________________________________________");
+				console.log("PREV TASK", previous_task, task);
+				return previous_task ? this._db.remove(previous_task) : Promise.resolve(true);
+			})
+			.then((res) => {
+				return this.createTaskLookup(task);
+			});
+	}
+
+	cancelTask(task_data) {
+		let task = this.makeTask(task_data);
+		let lookup_key = this.taskLookupKey(task);
+		return this.getTaskLookup(task)
+			.then(tsk => {
+				console.log("CANCEL TASK", task, tsk);
+				return tsk ? this._db.removeNodes([tsk, lookup_key]) : Promise.resolve(false);
+			})
+			.then((res) => {
+				return this.settleNext();
+			});
+	}
+
+	maybeRescheduleTask(task) {
+		return task.regular ? this.scheduleTask(task) : Promise.resolve(false);
+	}
+
+	maybeDebounceTask(task) {
+		return task.solo ? this.debounceTask(task) : Promise.resolve(false);
+	}
+
+	maybeCreateCancellation(task) {
+		return task.solo ? Promise.resolve(false) : this.createTaskLookup(task);
+	}
+
+	taskLookupKey(task) {
+		return `lookup_task_${task.identifier}`;
+	}
+
+	getTaskLookup(task) {
+		let lookup_key = this.taskLookupKey(task);
+		return this._db.getNodes(lookup_key)
+			.then((res) => {
+				return _.get(res, `${lookup_key}.value.content`, false);
+			});
+	}
+
+	createTaskLookup(task) {
+		let lookup_key = this.taskLookupKey(task);
+		let lookup = {
+			"@id": lookup_key,
+			"@category": this.task_class,
+			"@type": "Lookup",
+			"content": task['@id']
+		};
+		return this._db.upsertNodes(lookup);
+	}
+
+	runOrScheduleTask(task_data) {
+		let delta = task_data.time * 1000;
+
+		// console.log("ADD TASK ", task_data);
+
 		if (delta < this.immediate_delta || delta < 0) {
-			return this.runTask({
-					module_name,
-					task_name,
-					task_type,
-					params
-				})
+			let stime = _.now() + delta;
+			if (!task_data.ahead)
+				stime = stime + this.ahead_delta;
+			task_data.stime = stime;
+
+			return this.runTask(task_data)
 				.then((res) => {
-					return this.remove_on_completion ? Promise.resolve(true) :
-						this.storeTask({
-							stime,
-							time,
-							solo,
-							task_name,
-							module_name,
-							task_type,
-							params,
-							completed: res
-						});
+					return this.completeTask({
+						task: task_data,
+						result: res,
+						existent: false
+					});
 				});
 		} else {
 			let t_id;
-			return this.storeTask({
-					stime,
-					time,
-					task_name,
-					solo,
-					module_name,
-					task_type,
-					params
-				})
+			return this.scheduleTask(task_data)
 				.then((res) => {
-					t_id = _.keys(res)[0];
+					t_id = res;
 					return this.settleNext();
 				})
-				.then(res => t_id);
+				.then(r => t_id);
 		}
+	}
 
+	makeTask({
+		cancellation_code,
+		time,
+		stime,
+		task_name,
+		solo = false,
+		regular = false,
+		module_name,
+		task_type,
+		params
+	}) {
+		// console.log("MAKE TASK", ahead, stime);
+		let identifier = `${module_name}-${task_type}-${task_name}-${params._action}`;
+		if (cancellation_code)
+			identifier += `--${cancellation_code}`;
+
+		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
+		let task = {
+			"@id": key,
+			"@type": this.task_class,
+			//debounce params
+			identifier,
+			solo,
+			//cancellation params
+			cancellation_code,
+			//timings
+			stime,
+			time,
+			//rescheduling
+			regular,
+			//emit
+			task_name,
+			//addtask
+			module_name,
+			task_type,
+			//args
+			params,
+			completed: false
+		};
+		return task;
+	}
+
+	scheduleTask(task_data) {
+		let delta = task_data.time * 1000;
+		let stime = _.now() + delta;
+		if (!task_data.ahead)
+			stime = stime + this.ahead_delta;
+		task_data.stime = stime;
+
+		let task = this.makeTask(task_data);
+
+		return this.storeTask(task)
+			.then((res) => {
+				task['@id'] = _.keys(res)[0];
+				return this.maybeDebounceTask(task);
+			})
+			.then((res) => {
+				return this.maybeCreateCancellation(task);
+			})
+			.then(res => task['@id']);
 	}
 
 	runTask({
@@ -189,46 +279,61 @@ class Taskrunner extends Abstract {
 		let to = this.to = _.now() + this.ahead_delta;
 
 		let task_content;
+		let uniq_tasks;
 		// let tm;
 		// let diff;
 
 		return this.getTasks()
 			.then((tasks) => {
-				// console.log("RUNNING TASKS", _.map(tasks, '@id'), from, to, this.t_interval);
-				let same = [];
+				// console.log("RUNNING TASKS", _.map(tasks, '@id'));
 				task_content = _(tasks)
 					.filter((task) => {
 						return (task.stime < to && !task.completed);
 					})
-					.map((task) => {
-						same = _(tasks)
-							.filter(t => {
-								return (task.identifier = t.identifier && task.solo && task['@id'] != t['@id']);
-							})
-							.map('@id')
-							.concat(same)
-							.uniq()
-							.value();
-						return task;
+					.orderBy('stime', 'desc');
+
+
+				uniq_tasks = task_content
+					.uniqWith((v, ov) => {
+						return v.identifier == ov.identifier && v.solo && ov.solo && v.stime < ov.stime;
 					})
 					.keyBy('@id')
 					.value();
-				// console.log("SAME", same);
-				// console.log("TASK CONTENT", task_content);
+
+				task_content = task_content
+					.keyBy('@id')
+					.value();
+
+				console.log("UNIQ", uniq_tasks);
+				console.log("TASK CONTENT", task_content);
 				return Promise.props(_.mapValues(task_content, (task) => {
-					return !~_.indexOf(same, task['@id']) ? this.runTask(task) : Promise.resolve(true);
+					return uniq_tasks[task['@id']] ? this.runTask(task) : Promise.resolve(true);
 				}));
 			})
 			.then((res) => {
 				return Promise.props(_.mapValues(res, (task_result, key) => {
 					let task = _.cloneDeep(task_content[key]);
 					task.completed = task_result;
-					// console.log("TS", task, this.remove_on_completion)
-					return this.remove_on_completion ? this._db.remove(key) : this.storeTask(task);
+					return this.completeTask({
+						task,
+						result: !!task_result,
+						existent: true
+					});
 				}));
 			})
 			.then((res) => {
+				// console.log("RRRRRR", res);
+				return Promise.map(_.values(uniq_tasks), (task) => {
+					return this.maybeRescheduleTask(task);
+				});
+			})
+			.then((res) => {
+				// console.log("FFFFF", res);
 				return this.settleNext();
+			})
+			.then((res) => {
+				this.from = this.to;
+				return res;
 			})
 			.catch((err) => {
 				console.log("ERR RUN TASKS", err.stack);
@@ -237,9 +342,9 @@ class Taskrunner extends Abstract {
 	}
 
 	getTasks() {
-		let intervals = _.range(_.parseInt(this.from / this.interval), _.parseInt(_.now() / this.interval) + 1);
+		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
+		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 1);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
-
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
 				let keys = [];
@@ -271,13 +376,13 @@ class Taskrunner extends Abstract {
 			.then((tasks) => {
 				let last = _(tasks)
 					.map('stime')
-					.map(_.parseInt)
-					.sortBy()
+					.orderBy(_.parseInt, 'asc')
 					.find(t => (t > this.to));
 				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
 				this.t_interval = (last || next_mark) - _.now();
-				this.from = this.to;
-				// console.log("NEXT", last, next_mark, this.t_interval);
+				// this.from = this.to;
+				console.log(tasks);
+				console.log("NEXT", last, next_mark, this.t_interval);
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
 					this.runTasks();

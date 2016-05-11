@@ -12,6 +12,7 @@ module.exports = {
 	},
 	taskrunner: {
 		add_task: "taskrunner.add.task",
+		cancel_task: "taskrunner.cancel.task",
 		now: "taskrunner.now"
 	},
 	facehugger: {
