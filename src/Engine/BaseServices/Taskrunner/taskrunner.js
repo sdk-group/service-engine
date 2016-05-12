@@ -275,6 +275,7 @@ class Taskrunner extends Abstract {
 	}
 
 	runTasks() {
+		console.log("RUNNING TASKS");
 		let from = this.from;;
 		let to = this.to = _.now() + this.ahead_delta;
 
@@ -306,6 +307,14 @@ class Taskrunner extends Abstract {
 
 				console.log("UNIQ", uniq_tasks);
 				console.log("TASK CONTENT", task_content);
+			})
+			.then((res) => {
+				// console.log("RRRRRR", res);
+				return Promise.map(_.values(uniq_tasks), (task) => {
+					return this.maybeRescheduleTask(task);
+				});
+			})
+			.then((res) => {
 				return Promise.props(_.mapValues(task_content, (task) => {
 					return uniq_tasks[task['@id']] ? this.runTask(task) : Promise.resolve(true);
 				}));
@@ -320,12 +329,6 @@ class Taskrunner extends Abstract {
 						existent: true
 					});
 				}));
-			})
-			.then((res) => {
-				// console.log("RRRRRR", res);
-				return Promise.map(_.values(uniq_tasks), (task) => {
-					return this.maybeRescheduleTask(task);
-				});
 			})
 			.then((res) => {
 				// console.log("FFFFF", res);
@@ -343,7 +346,7 @@ class Taskrunner extends Abstract {
 
 	getTasks() {
 		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
-		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 1);
+		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
