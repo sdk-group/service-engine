@@ -80,7 +80,7 @@ class Taskrunner extends Abstract {
 				opts[task['@id']] = {
 					expiry: this.task_expiration
 				};
-				console.log("STORING", task, cnt_key);
+				// console.log("STORING", task, cnt_key);
 				return this._db.insertNodes(task, opts);
 			})
 			.catch((err) => {
@@ -102,8 +102,8 @@ class Taskrunner extends Abstract {
 	debounceTask(task) {
 		return this.getTaskLookup(task)
 			.then((previous_task) => {
-				console.log("______________________________________________________________________________________");
-				console.log("PREV TASK", previous_task, task);
+				// console.log("______________________________________________________________________________________");
+				// console.log("PREV TASK", previous_task, task);
 				return previous_task ? this._db.remove(previous_task) : Promise.resolve(true);
 			})
 			.then((res) => {
@@ -116,7 +116,7 @@ class Taskrunner extends Abstract {
 		let lookup_key = this.taskLookupKey(task);
 		return this.getTaskLookup(task)
 			.then(tsk => {
-				console.log("CANCEL TASK", task, tsk);
+				// console.log("CANCEL TASK", task, tsk);
 				return tsk ? this._db.removeNodes([tsk, lookup_key]) : Promise.resolve(false);
 			})
 			.then((res) => {
@@ -275,7 +275,7 @@ class Taskrunner extends Abstract {
 	}
 
 	runTasks() {
-		console.log("RUNNING TASKS");
+		// console.log("RUNNING TASKS");
 		let from = this.from;;
 		let to = this.to = _.now() + this.ahead_delta;
 
@@ -305,8 +305,8 @@ class Taskrunner extends Abstract {
 					.keyBy('@id')
 					.value();
 
-				console.log("UNIQ", uniq_tasks);
-				console.log("TASK CONTENT", task_content);
+				// console.log("UNIQ", uniq_tasks);
+				// console.log("TASK CONTENT", task_content);
 			})
 			.then((res) => {
 				// console.log("RRRRRR", res);
@@ -345,7 +345,7 @@ class Taskrunner extends Abstract {
 	}
 
 	getTasks() {
-		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
+		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
 		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
@@ -384,8 +384,8 @@ class Taskrunner extends Abstract {
 				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
 				this.t_interval = (last || next_mark) - _.now();
 				// this.from = this.to;
-				console.log(tasks);
-				console.log("NEXT", last, next_mark, this.t_interval);
+				// console.log(tasks);
+				// console.log("NEXT", last, next_mark, this.t_interval);
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
 					this.runTasks();
