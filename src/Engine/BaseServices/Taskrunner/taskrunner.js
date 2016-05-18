@@ -162,7 +162,7 @@ class Taskrunner extends Abstract {
 	runOrScheduleTask(task_data) {
 		let delta = task_data.time * 1000;
 
-		// console.log("ADD TASK ", task_data);
+		console.log("ADD TASK ", task_data);
 
 		if (delta < this.immediate_delta || delta < 0) {
 			let stime = _.now() + delta;
@@ -237,7 +237,7 @@ class Taskrunner extends Abstract {
 		if (!task_data.ahead)
 			stime = stime + this.ahead_delta;
 		task_data.stime = stime;
-
+		console.log("SCHEDULE TASK", task_data);
 		let task = this.makeTask(task_data);
 
 		return this.storeTask(task)
@@ -286,6 +286,7 @@ class Taskrunner extends Abstract {
 
 		return this.getTasks()
 			.then((tasks) => {
+				console.log("RUNNING TASKS", tasks);
 				// console.log("RUNNING TASKS", _.map(tasks, '@id'));
 				task_content = _(tasks)
 					.filter((task) => {
@@ -296,7 +297,7 @@ class Taskrunner extends Abstract {
 
 				uniq_tasks = task_content
 					.uniqWith((v, ov) => {
-						return v.identifier == ov.identifier && v.solo && ov.solo && v.stime < ov.stime;
+						return v.identifier == ov.identifier && v.solo && ov.solo;
 					})
 					.keyBy('@id')
 					.value();
@@ -305,8 +306,8 @@ class Taskrunner extends Abstract {
 					.keyBy('@id')
 					.value();
 
-				// console.log("UNIQ", uniq_tasks);
-				// console.log("TASK CONTENT", task_content);
+				console.log("UNIQ", uniq_tasks);
+				console.log("TASK CONTENT", task_content);
 			})
 			.then((res) => {
 				// console.log("RRRRRR", res);
@@ -345,7 +346,7 @@ class Taskrunner extends Abstract {
 	}
 
 	getTasks() {
-		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
+		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
 		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
@@ -385,7 +386,7 @@ class Taskrunner extends Abstract {
 				this.t_interval = (last || next_mark) - _.now();
 				// this.from = this.to;
 				// console.log(tasks);
-				// console.log("NEXT", last, next_mark, this.t_interval);
+				console.log("NEXT", last, next_mark, this.t_interval);
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
 					this.runTasks();
