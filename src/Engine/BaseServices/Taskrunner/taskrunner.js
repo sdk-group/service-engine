@@ -260,10 +260,16 @@ class Taskrunner extends Abstract {
 	}) {
 		let opts = _.cloneDeep(params);
 		opts.ts_now = _.now();
-		if (task_type == 'emit') {
+		switch (task_type) {
+		case 'emit':
 			this.emitter.emit(task_name, opts);
 			return Promise.resolve(true);
-		} else {
+			break;
+		case 'command':
+			this.emitter.command(task_name, opts);
+			return Promise.resolve(true);
+			break;
+		case 'add-task':
 			return this.emitter.addTask(module_name, opts)
 				.then((res) => {
 					return true;
@@ -272,6 +278,7 @@ class Taskrunner extends Abstract {
 					console.log("TASK ERRORED", (module_name || task_name), err.stack);
 					return false;
 				});
+			break;
 		}
 	}
 
