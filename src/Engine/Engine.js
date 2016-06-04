@@ -48,7 +48,7 @@ class Engine {
         let init = _.fromPairs(_.map(this.services, (service, index) => [service.getName(), service.init(this.service_params[index], this.cfg)]));
         return Promise.props(init);
       })
-      .then(() => Promise.all(_.map(this.services, (service) => service.launch())))
+      .then(() => Promise.props(_.fromPairs(_.map(this.services, (service) => [service.getName(), service.launch()]))))
       .then((r) => {
         message_bus.emit('engine.ready', {
           status: r
