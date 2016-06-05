@@ -22,10 +22,12 @@ class Taskrunner extends Abstract {
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = _.upperFirst(_.camelCase(this.key));
-		this.task_expiration = _.parseInt(params.task_expiration) || 0;
+		this.task_expiration = _.parseInt(params.task_expiration) || 5;
 		this.from = _.parseInt(moment()
 			.startOf('day')
 			.format('x'));
+		this.max_parallel_queries = cfg.max_parallel_queries || 1000;
+		this.solo_tasks = {};
 
 		this.emitter.on(this.event_names.add_task, (data) => this.runOrScheduleTask(data));
 		this.emitter.on(this.event_names.cancel_task, (data) => this.cancelTask(data));
@@ -35,7 +37,7 @@ class Taskrunner extends Abstract {
 
 		this._db = db.bucket(cfg.buckets.main);
 
-		this.runTasks();
+		this.startup();
 
 		return Promise.resolve(true);
 	}
@@ -82,10 +84,17 @@ class Taskrunner extends Abstract {
 					expiry: this.task_expiration
 				};
 				// console.log("STORING", task, cnt_key);
+				inmemory_cache.set(task['@id'], task, this.task_expiration);
 				return this._db.insertNodes(task, opts);
 			})
 			.catch((err) => {
 				console.log("ERR STORING TASK", err.stack);
+				global.logger && logger.error(
+					err, {
+						module: 'taskrunner',
+						method: 'store-task',
+						task
+					});
 				return false;
 			});
 	}
@@ -96,19 +105,28 @@ class Taskrunner extends Abstract {
 		existent = true
 	}) {
 		task.completed = result;
-		// console.log("COMPLETED TASK", task, result, existent, this.remove_on_completion);
+		// console.log("COMPLETED TASK", result, existent, this.remove_on_completion, task['@id']);
+		inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
 
 	debounceTask(task) {
 		return this.getTaskLookup(task)
 			.then((previous_task) => {
-				// console.log("______________________________________________________________________________________");
-				// console.log("PREV TASK", previous_task, task);
-				return previous_task ? this._db.remove(previous_task) : Promise.resolve(true);
+				return previous_task && (inmemory_cache.get(previous_task) || this._db.get(previous_task)
+					.then(r => r && r.value));
+			})
+			.then((prev_task) => {
+				// console.log("____________________ __________________________________________________________________");
+				// console.log("PREV TASK", prev_task, task);
+				if (prev_task && (prev_task.stime - task.stime) < task.time * 500) {
+					inmemory_cache.get(prev_task['@id']) && inmemory_cache.del(prev_task['@id']);
+					return this._db.remove(prev_task['@id']);
+				}
+				return !prev_task;
 			})
 			.then((res) => {
-				return this.createTaskLookup(task);
+				return res && this.createTaskLookup(task);
 			});
 	}
 
@@ -118,6 +136,8 @@ class Taskrunner extends Abstract {
 		return this.getTaskLookup(task)
 			.then(tsk => {
 				// console.log("CANCEL TASK", task, tsk);
+				inmemory_cache.get(tsk) && inmemory_cache.del(tsk);
+				inmemory_cache.get(lookup_key) && inmemory_cache.del(lookup_key);
 				return tsk ? this._db.removeNodes([tsk, lookup_key]) : Promise.resolve(false);
 			})
 			.then((res) => {
@@ -126,6 +146,7 @@ class Taskrunner extends Abstract {
 	}
 
 	maybeRescheduleTask(task) {
+		// if (task.regular) console.log("RESCHE", task['@id']);
 		return task.regular ? this.scheduleTask(task) : Promise.resolve(false);
 	}
 
@@ -143,9 +164,12 @@ class Taskrunner extends Abstract {
 
 	getTaskLookup(task) {
 		let lookup_key = this.taskLookupKey(task);
-		return this._db.getNodes(lookup_key)
+		let cached = inmemory_cache.get(lookup_key);
+		return cached && Promise.resolve(cached) || this._db.getNodes(lookup_key)
 			.then((res) => {
-				return _.get(res, `${lookup_key}.value.content`, false);
+				let r = _.get(res, `${lookup_key}.value.content`, false);
+				r && inmemory_cache.set(lookup_key, r, this.task_expiration);
+				return r;
 			});
 	}
 
@@ -157,7 +181,12 @@ class Taskrunner extends Abstract {
 			"@type": "Lookup",
 			"content": task['@id']
 		};
-		return this._db.upsertNodes(lookup);
+		let opts = {};
+		opts[lookup['@id']] = {
+			expiry: this.task_expiration
+		};
+		inmemory_cache.set(lookup_key, lookup.content, this.task_expiration);
+		return this._db.upsertNodes(lookup, opts);
 	}
 
 	runOrScheduleTask(task_data) {
@@ -316,10 +345,8 @@ class Taskrunner extends Abstract {
 
 				// console.log("UNIQ", uniq_tasks);
 				// console.log("TASK CONTENT", task_content);
-			})
-			.then((res) => {
 				// console.log("RRRRRR", res);
-				return Promise.map(_.values(task_content), (task) => {
+				return Promise.map(_.values(uniq_tasks), (task) => {
 					return this.maybeRescheduleTask(task);
 				});
 			})
@@ -349,6 +376,11 @@ class Taskrunner extends Abstract {
 			})
 			.catch((err) => {
 				console.log("ERR RUN TASKS", err.stack);
+				global.logger && logger.error(
+					err, {
+						module: 'taskrunner',
+						method: 'run-tasks'
+					});
 				return false;
 			});
 	}
@@ -356,6 +388,49 @@ class Taskrunner extends Abstract {
 	getTasks() {
 		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
 		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
+		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
+		let cached;
+		return this._db.getNodes(cnt_keys)
+			.then(counters => {
+				let keys = [];
+				_(counters)
+					.map((res, cnt_key) => {
+						if (!res) return;
+						let nums = res.value + 1;
+						let key = _(cnt_key)
+							.split('-')
+							.slice(1)
+							.join('-');
+						keys = _.concat(keys, _.map(_.range(nums), (num) => `${key}-${num}`));
+					})
+					.value();
+				cached = inmemory_cache.mget(keys);
+				let missing = _.filter(keys, key => _.isUndefined(cached[key]));
+				return this._db.getNodes(missing);
+			})
+			.then((tasks) => {
+				return _(tasks)
+					.values()
+					.compact()
+					.map('value')
+					.compact()
+					.map(v => inmemory_cache.set(v['@id'], v, this.task_expiration))
+					.concat(_.values(cached))
+					.sortBy('stime')
+					.value();
+			});
+	}
+
+	startup() {
+		let from = this.from;;
+		let to = this.to = _.now() - this.interval;
+		// console.log("ЫFROM", this.from, "TO", this.to, "NOW", _.now());
+		this.from = this.to;
+
+
+		let task_content;
+		let uniq_tasks;
+		let intervals = _.range(_.parseInt(from / this.interval) - 1, _.parseInt(_.now() / this.interval));
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
@@ -371,16 +446,78 @@ class Taskrunner extends Abstract {
 						keys = _.concat(keys, _.map(_.range(nums), (num) => `${key}-${num}`));
 					})
 					.value();
-				return this._db.getNodes(keys);
+				let chunked = _.chunk(keys, this.max_parallel_queries);
+
+				return Promise.mapSeries(chunked, (ks) => {
+						return this._db.getNodes(ks)
+							.then((tasks) => {
+								return _(tasks)
+									.values()
+									.compact()
+									.map('value')
+									.sortBy('stime')
+									.value();
+							});
+					})
+					.then((tasks) => {
+						// console.log("RUNNING TASKS", tasks);
+						// console.log("RUNNING TASKS", _.map(_.flatten(tasks), '@id'));
+						task_content = _(tasks)
+							.flatten()
+							.filter((task) => {
+								return (task.stime < to && !task.completed);
+							})
+							.orderBy('stime', 'desc');
+
+
+						uniq_tasks = task_content
+							.uniqWith((v, ov) => {
+								return v.identifier == ov.identifier && v.solo && ov.solo;
+							})
+							.keyBy('@id')
+							.value();
+
+						task_content = task_content
+							.keyBy('@id')
+							.value();
+
+						// console.log("UNIQ", _.size(uniq_tasks));
+						// console.log("TASK CONTENT", task_content);
+						// console.log("RRRRRR", res);
+						return Promise.props(_.mapValues(task_content, (task) => {
+							return uniq_tasks[task['@id']] ? this.runTask(task) : Promise.resolve(true);
+						}));
+					})
+					.then((res) => {
+						return Promise.props(_.mapValues(res, (task_result, key) => {
+							let task = _.cloneDeep(task_content[key]);
+							task.completed = task_result;
+							return this.completeTask({
+								task,
+								result: !!task_result,
+								existent: true
+							});
+						}));
+					});
 			})
-			.then((tasks) => {
-				return _(tasks)
-					.values()
-					.compact()
-					.map('value')
-					.sortBy('stime')
-					.value();
-			});
+			.then((res) => {
+				// console.log("FFFFF", res);
+				return this.settleNext();
+			})
+			.then((res) => {
+				this.from = this.to;
+				return res;
+			})
+			.catch((err) => {
+				global.logger && logger.error(
+					err, {
+						module: 'taskrunner',
+						method: 'startup',
+						task
+					});
+				console.log("ERR STARTUP TASKS", err.stack);
+				return false;
+			});;
 	}
 
 	settleNext() {
