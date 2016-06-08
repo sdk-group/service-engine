@@ -512,8 +512,7 @@ class Taskrunner extends Abstract {
 				global.logger && logger.error(
 					err, {
 						module: 'taskrunner',
-						method: 'startup',
-						task
+						method: 'startup'
 					});
 				console.log("ERR STARTUP TASKS", err.stack);
 				return false;
