@@ -235,7 +235,7 @@ class Taskrunner extends Abstract {
 		if (cancellation_code)
 			identifier += `--${cancellation_code}`;
 
-		let key = `${this.key}-${_.parseInt(_.now() / this.interval)}`;
+		let key = `${this.key}-${_.parseInt(stime / this.interval)}`;
 		let task = {
 			"@id": key,
 			"@type": this.task_class,
