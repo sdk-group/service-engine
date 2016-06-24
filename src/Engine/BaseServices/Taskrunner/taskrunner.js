@@ -105,7 +105,7 @@ class Taskrunner extends Abstract {
 		existent = true
 	}) {
 		task.completed = result;
-		// console.log("COMPLETED TASK", result, existent, this.remove_on_completion, task['@id']);
+		console.log("COMPLETED TASK", result, existent, task['@id']);
 		inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
@@ -117,9 +117,9 @@ class Taskrunner extends Abstract {
 					.then(r => r && r.value));
 			})
 			.then((prev_task) => {
-				// console.log("____________________ __________________________________________________________________");
-				// console.log("PREV TASK", prev_task, task);
-				if (prev_task && (prev_task.stime - task.stime) < task.time * 500) {
+				console.log("____________________ __________________________________________________________________");
+				console.log("PREV TASK", prev_task, task);
+				if (prev_task) {
 					inmemory_cache.get(prev_task['@id']) && inmemory_cache.del(prev_task['@id']);
 					return this._db.remove(prev_task['@id']);
 				}
@@ -191,15 +191,13 @@ class Taskrunner extends Abstract {
 
 	runOrScheduleTask(task_data) {
 		let delta = task_data.time * 1000;
-
+		let stime = _.now() + delta;
+		if (!task_data.ahead)
+			stime = stime + this.ahead_delta;
+		task_data.stime = stime;
 		// console.log("ADD TASK ", task_data);
 
 		if (delta < this.immediate_delta || delta < 0) {
-			let stime = _.now() + delta;
-			if (!task_data.ahead)
-				stime = stime + this.ahead_delta;
-			task_data.stime = stime;
-
 			return this.runTask(task_data)
 				.then((res) => {
 					return this.completeTask({
@@ -313,7 +311,7 @@ class Taskrunner extends Abstract {
 
 	runTasks() {
 		// console.log("RUNNING TASKS");
-		let from = this.from;;
+		let from = this.from;
 		let to = this.to = _.now() + this.ahead_delta;
 
 		let task_content;
@@ -329,21 +327,20 @@ class Taskrunner extends Abstract {
 					.filter((task) => {
 						return (task.stime < to && !task.completed);
 					})
-					.orderBy('stime', 'desc');
+					.orderBy('stime', 'desc')
+					.value();
 
 
-				uniq_tasks = task_content
+				uniq_tasks = _(task_content)
 					.uniqWith((v, ov) => {
-						return v.identifier == ov.identifier && v.solo && ov.solo;
+						return (v.identifier == ov.identifier) && v.solo && ov.solo;
 					})
 					.keyBy('@id')
 					.value();
 
-				task_content = task_content
-					.keyBy('@id')
-					.value();
 
-				// console.log("UNIQ", uniq_tasks);
+				console.log("UNIQ", _.map(uniq_tasks, 'stime'));
+				console.log("UNIQ", _.map(uniq_tasks, '@id'));
 				// console.log("TASK CONTENT", task_content);
 				// console.log("RRRRRR", res);
 				return Promise.map(_.values(uniq_tasks), (task) => {
@@ -351,12 +348,13 @@ class Taskrunner extends Abstract {
 				});
 			})
 			.then((res) => {
-				return Promise.props(_.mapValues(task_content, (task) => {
+				return Promise.mapSeries(task_content, task => {
 					return uniq_tasks[task['@id']] ? this.runTask(task) : Promise.resolve(true);
-				}));
+				})
+
 			})
 			.then((res) => {
-				return Promise.props(_.mapValues(res, (task_result, key) => {
+				return Promise.map(res, (task_result, key) => {
 					let task = _.cloneDeep(task_content[key]);
 					task.completed = task_result;
 					return this.completeTask({
@@ -364,7 +362,7 @@ class Taskrunner extends Abstract {
 						result: !!task_result,
 						existent: true
 					});
-				}));
+				});
 			})
 			.then((res) => {
 				// console.log("FFFFF", res);
