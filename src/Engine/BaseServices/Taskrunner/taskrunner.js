@@ -339,6 +339,8 @@ class Taskrunner extends Abstract {
 					.value();
 
 
+				console.log("TASK", _.map(task_content, 'stime'));
+				console.log("TASK", _.map(task_content, 'identifier'));
 				console.log("UNIQ", _.map(uniq_tasks, 'stime'));
 				console.log("UNIQ", _.map(uniq_tasks, '@id'));
 				// console.log("TASK CONTENT", task_content);
@@ -428,7 +430,7 @@ class Taskrunner extends Abstract {
 
 		let task_content;
 		let uniq_tasks;
-		let intervals = _.range(_.parseInt(from / this.interval) - 1, _.parseInt(_.now() / this.interval));
+		let intervals = _.range(_.parseInt(from / this.interval) - 2, _.parseInt(_.now() / this.interval));
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
