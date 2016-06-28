@@ -39,7 +39,6 @@ class Servicify extends Abstract {
 
 			let method = this.module[task.handler].bind(this.module);
 			let name = task.name || _.kebabCase(task.handler);
-
 			queue.listenTask(name, (data) => this.isWorking() ? method(data) : FAILURE_MESSAGE);
 		});
 	}

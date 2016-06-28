@@ -22,7 +22,7 @@ class Taskrunner extends Abstract {
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = _.upperFirst(_.camelCase(this.key));
-		this.task_expiration = _.parseInt(params.task_expiration) || 5;
+		this.task_expiration = _.parseInt(params.task_expiration) || 86400;
 		this.from = _.parseInt(moment()
 			.startOf('day')
 			.format('x'));
@@ -37,9 +37,12 @@ class Taskrunner extends Abstract {
 
 		this._db = db.bucket(cfg.buckets.main);
 
-		this.startup();
-
 		return Promise.resolve(true);
+	}
+
+	launch() {
+		return this.startup()
+			.then((res) => true);
 	}
 
 	start() {
@@ -72,19 +75,18 @@ class Taskrunner extends Abstract {
 
 	storeTask(task) {
 		let cnt_key = `counter-${task['@id']}`;
-
 		return this._db.counter(cnt_key, 1, {
 				initial: 0,
-				expiry: this.task_expiration
+				expiry: this.task_expiration + task.stime / 1000
 			})
 			.then((res) => {
 				task['@id'] = `${task['@id']}-${(res.value || 0)}`;
 				let opts = {};
 				opts[task['@id']] = {
-					expiry: this.task_expiration
+					expiry: this.task_expiration + task.stime / 1000
 				};
-				// console.log("STORING", task, cnt_key);
-				inmemory_cache.set(task['@id'], task, this.task_expiration);
+				console.log("STORING", task, cnt_key);
+				inmemory_cache.set(task['@id'], task, this.task_expiration + task.stime / 1000);
 				return this._db.insertNodes(task, opts);
 			})
 			.catch((err) => {
@@ -105,7 +107,9 @@ class Taskrunner extends Abstract {
 		existent = true
 	}) {
 		task.completed = result;
-		console.log("COMPLETED TASK", result, existent, task['@id']);
+		console.log("-----------------------------------------");
+		console.log("COMPLETED TASK", result, existent, task);
+		console.log("-----------------------------------------");
 		inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
@@ -117,7 +121,7 @@ class Taskrunner extends Abstract {
 					.then(r => r && r.value));
 			})
 			.then((prev_task) => {
-				console.log("____________________ __________________________________________________________________");
+				console.log("_____________________________________________________");
 				console.log("PREV TASK", prev_task, task);
 				if (prev_task) {
 					inmemory_cache.get(prev_task['@id']) && inmemory_cache.del(prev_task['@id']);
@@ -146,7 +150,7 @@ class Taskrunner extends Abstract {
 	}
 
 	maybeRescheduleTask(task) {
-		// if (task.regular) console.log("RESCHE", task['@id']);
+		console.log("RESCHE", task);
 		return task.regular ? this.scheduleTask(task) : Promise.resolve(false);
 	}
 
@@ -168,7 +172,7 @@ class Taskrunner extends Abstract {
 		return cached && Promise.resolve(cached) || this._db.getNodes(lookup_key)
 			.then((res) => {
 				let r = _.get(res, `${lookup_key}.value.content`, false);
-				r && inmemory_cache.set(lookup_key, r, this.task_expiration);
+				r && inmemory_cache.set(lookup_key, r, this.task_expiration + task.stime / 1000);
 				return r;
 			});
 	}
@@ -183,9 +187,10 @@ class Taskrunner extends Abstract {
 		};
 		let opts = {};
 		opts[lookup['@id']] = {
-			expiry: this.task_expiration
+			expiry: this.task_expiration + task.stime / 1000
 		};
-		inmemory_cache.set(lookup_key, lookup.content, this.task_expiration);
+		console.log("LOOKUP KEY");
+		inmemory_cache.set(lookup_key, lookup.content, this.task_expiration + task.stime / 1000);
 		return this._db.upsertNodes(lookup, opts);
 	}
 
@@ -265,8 +270,8 @@ class Taskrunner extends Abstract {
 		if (!task_data.ahead)
 			stime = stime + this.ahead_delta;
 		task_data.stime = stime;
-		// console.log("SCHEDULE TASK", task_data);
 		let task = this.makeTask(task_data);
+		console.log("SCHEDULE TASK", task);
 
 		return this.storeTask(task)
 			.then((res) => {
@@ -386,7 +391,7 @@ class Taskrunner extends Abstract {
 	}
 
 	getTasks() {
-		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
+		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
 		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		let cached;
@@ -414,7 +419,7 @@ class Taskrunner extends Abstract {
 					.compact()
 					.map('value')
 					.compact()
-					.map(v => inmemory_cache.set(v['@id'], v, this.task_expiration))
+					.map(v => inmemory_cache.set(v['@id'], v, this.task_expiration + v.stime / 1000))
 					.concat(_.values(cached))
 					.sortBy('stime')
 					.value();
@@ -422,6 +427,7 @@ class Taskrunner extends Abstract {
 	}
 
 	startup() {
+
 		let from = this.from;;
 		let to = this.to = _.now() - this.interval;
 		// console.log("ЫFROM", this.from, "TO", this.to, "NOW", _.now());
@@ -529,7 +535,7 @@ class Taskrunner extends Abstract {
 				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
 				this.t_interval = (last || next_mark) - _.now();
 				// this.from = this.to;
-				// console.log(tasks);
+				console.log(_.map(tasks, 'identifier'));
 				console.log("NEXT", last, next_mark, this.t_interval);
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
