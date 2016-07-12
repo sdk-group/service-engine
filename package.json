@@ -39,7 +39,7 @@
 		"validator": "^5.4.0"
 	},
 	"devDependencies": {
-		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git",
+		"Couchbird": "git+https://github.com/YuuKohaku/Couchbird.git#get-multi-workers",
 		"babel-plugin-transform-remove-console": "^6.8.0",
 		"babel-plugin-transform-strict-mode": "^6.8.0",
 		"babel-plugin-undeclared-variables-check": "^6.8.0",
