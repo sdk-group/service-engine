@@ -1,21 +1,17 @@
 'use strict'
 
-let _ = require('lodash');
-let queue = require("global-queue");
-
-let Abstract = require('../Abstract');
-//@FIXIT: not implemented yet
-let EventRegistry = require('../../EventRegistry.js');
-
+const _ = require('lodash');
+const StateMachine = require('./service-state-machine.js');
 
 const FAILURE_MESSAGE = {
-	reason: 'service down',
-	status: 'failed'
+	reason: 'imho, service is down',
+	status: false
 };
 
-class Servicify extends Abstract {
-	constructor(config) {
-		super({});
+class Servicify extends StateMachine {
+	constructor(model, broker, config) {
+		super(broker);
+		this.service_name = config.name || ;
 		let events = config.events || {};
 		EventRegistry.addGroup(events);
 
@@ -34,32 +30,34 @@ class Servicify extends Abstract {
 		}
 
 		_.forEach(config.tasks, (task) => {
-			if (!(this.module[task.handler] instanceof Function))
-				throw new Error('no such method');
+			if (!(this.module[task.handler] instanceof Function)) throw new Error('no such method');
 
 			let method = this.module[task.handler].bind(this.module);
 			let name = task.name || _.kebabCase(task.handler);
 			queue.listenTask(name, (data) => this.isWorking() ? method(data) : FAILURE_MESSAGE);
 		});
 	}
+	getNameString() {
+		return `${this.constructor.name} of ${this.module.constructor.name} named ${this.getName()}`;
+	}
 	getName() {
-		return `${this.constructor.name} of ${this.module.constructor.name}`;
+		return this.service_name;
 	}
-
 	init(config) {
-		return super.init(config)
-			.then((res) => {
-				return _.isFunction(this.module.init) ? this.module.init(config) : res;
-			});
-	}
+		let init = _.isFunction(this.module.init) ? this.module.init(config) : true;
 
+		return Promise.resolve(init);
+	}
 	launch() {
-		return super.launch()
-			.then((res) => {
-				return _.isFunction(this.module.launch) ? this.module.launch() : res;
-			});
-	}
+		let launch = _.isFunction(this.module.launch) ? this.module.launch() : true
 
+		let result = Promise.resolve(launch).then((res) => {
+			this.start();
+			return res;
+		});
+
+		return result
+	}
 	getAction(data) {
 		let kebab = 'action-' + data._action;
 		let method_name = _.camelCase(kebab);

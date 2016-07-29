@@ -1,8 +1,6 @@
 'use strict'
 
-let AbstractService = require('./BaseServices/Abstract');
 let Servicify = require('./BaseServices/Servicify');
-let Loader = require('../config/loader');
 
 let discover = function (path_string) {
 	return require(path_string);
@@ -12,35 +10,20 @@ class Engine {
 	constructor() {
 		throw new Error('singletone');
 	}
-	static set config(value) {
-		let cfg_ready = false;
-		if (value.config_key && value.buckets.config) {
-			let loader = Loader(value.buckets.config);
-			cfg_ready = loader.load({
-					services: value.config_key
-				})
-				.then(() => {
-					return loader.services;
-				});
-		} else {
-			cfg_ready = Promise.resolve(value);
-		}
-		this.cfg_ready = cfg_ready
-			.then((config) => {
-				let main_group = config.main_group;
-				this.service_params = _.map(main_group, 'params');
-				this.services = _.map(main_group, (item) => this.createService(item.path));
-				return true;
-			})
-			.catch((err) => {
-				console.error(err.stack);
-				return false;
-			});
-		this.cfg = value;
+	static set broker(value) {
+		this._broker = value;
 	}
-	static createService(path) {
-		let ServiceModel = discover(path);
-		return (ServiceModel.constructor.name != "Object") ? new ServiceModel() : new Servicify(ServiceModel)
+	static get broker() {
+		return this._broker;
+	}
+	static set config(manifest) {
+		this.services = _.map(manifest, this.createService.bind(this));
+	}
+	static createService(manifest) {
+		//@TODO: chek if exists in "discover"
+		let ServiceModel = discover(manifest.path);
+
+		return new Servicify(ServiceModel, this._broker, manifest)
 	}
 	static launch() {
 		return this.cfg_ready

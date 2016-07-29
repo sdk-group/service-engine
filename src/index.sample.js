@@ -1,27 +1,13 @@
 'use strict'
 
 require('./boot.js');
-require("./hosts.js");
 
-let config = require('./config/db_config.json');
-let Auth = require('iris-auth');
-let Couchbird = require('Couchbird')(config.couchbird); //singletone inits here
-let IrisInit = require("resource-management-framework").initializer(config.buckets.main);
+let Customizer = require('./engine/broker-customizer.js');
 
-Auth.configure({
-	data: config.buckets.main,
-	session: config.buckets.auth
-});
+let queue = Customizer('./routing.json');
+let Engine = require('./Engine/engine.js');
 
-
-let Engine = require('./Engine/Engine.js');
-let EventRegistry = require('./Engine/EventRegistry.js');
-let event_list = require('./Engine/Model/Events/event-list.js');
-
-EventRegistry.init(event_list);
-Engine.config = {
-	config_key: "iris://config#service_groups",
-	bucket: config.buckets.main
-};
+Engine.config = require('./manifest.json');
+Engine.broker = queue;
 
 Engine.launch();
