@@ -34,6 +34,7 @@ class Engine {
 			})
 			.catch((err) => {
 				console.error(err.stack);
+				global.logger && global.logger.error(err);
 				return false;
 			});
 		this.cfg = value;
