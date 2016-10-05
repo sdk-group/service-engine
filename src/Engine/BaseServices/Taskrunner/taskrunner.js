@@ -140,9 +140,11 @@ class Taskrunner extends Abstract {
 		return this.getTaskLookup(task)
 			.then(tsk => {
 				// console.log("CANCEL TASK", task, tsk);
+				if (!tsk)
+					return false;
 				inmemory_cache.get(tsk) && inmemory_cache.del(tsk);
 				inmemory_cache.get(lookup_key) && inmemory_cache.del(lookup_key);
-				return tsk ? this._db.removeNodes([tsk, lookup_key]) : Promise.resolve(false);
+				return this._db.removeNodes([tsk, lookup_key]);
 			})
 			.then((res) => {
 				return this.settleNext();
