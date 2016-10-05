@@ -85,7 +85,7 @@ class Taskrunner extends Abstract {
 				opts[task['@id']] = {
 					expiry: this.task_expiration + task.stime / 1000
 				};
-				console.log("STORING", task, cnt_key);
+				// console.log("STORING", task, cnt_key);
 				inmemory_cache.set(task['@id'], task, this.task_expiration + task.stime / 1000);
 				return this._db.insertNodes(task, opts);
 			})
@@ -107,9 +107,9 @@ class Taskrunner extends Abstract {
 		existent = true
 	}) {
 		task.completed = result;
-		console.log("-----------------------------------------");
-		console.log("COMPLETED TASK", result, existent, task);
-		console.log("-----------------------------------------");
+		// console.log("-----------------------------------------");
+		// console.log("COMPLETED TASK", result, existent, task);
+		// console.log("-----------------------------------------");
 		inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
@@ -121,8 +121,8 @@ class Taskrunner extends Abstract {
 					.then(r => r && r.value));
 			})
 			.then((prev_task) => {
-				console.log("_____________________________________________________");
-				console.log("PREV TASK", prev_task, task);
+				// console.log("_____________________________________________________");
+				// console.log("PREV TASK", prev_task, task);
 				if (prev_task) {
 					inmemory_cache.get(prev_task['@id']) && inmemory_cache.del(prev_task['@id']);
 					return this._db.remove(prev_task['@id']);
@@ -130,7 +130,7 @@ class Taskrunner extends Abstract {
 				return !prev_task;
 			})
 			.then((res) => {
-				return res && this.createTaskLookup(task);
+				return res ? this.createTaskLookup(task) : false;
 			});
 	}
 
@@ -150,7 +150,7 @@ class Taskrunner extends Abstract {
 	}
 
 	maybeRescheduleTask(task) {
-		console.log("RESCHE", task);
+		// console.log("RESCHE", task);
 		return task.regular ? this.scheduleTask(task) : Promise.resolve(false);
 	}
 
@@ -189,7 +189,6 @@ class Taskrunner extends Abstract {
 		opts[lookup['@id']] = {
 			expiry: this.task_expiration + task.stime / 1000
 		};
-		console.log("LOOKUP KEY");
 		inmemory_cache.set(lookup_key, lookup.content, this.task_expiration + task.stime / 1000);
 		return this._db.upsertNodes(lookup, opts);
 	}
@@ -271,7 +270,7 @@ class Taskrunner extends Abstract {
 			stime = stime + this.ahead_delta;
 		task_data.stime = stime;
 		let task = this.makeTask(task_data);
-		console.log("SCHEDULE TASK", task);
+		// console.log("SCHEDULE TASK", task);
 
 		return this.storeTask(task)
 			.then((res) => {
@@ -290,6 +289,7 @@ class Taskrunner extends Abstract {
 		task_type,
 		params
 	}) {
+		// console.log("RUNTASK", module_name, task_name, task_type, params);
 		let opts = _.cloneDeep(params);
 		opts.ts_now = _.now();
 		switch (task_type) {
@@ -344,10 +344,10 @@ class Taskrunner extends Abstract {
 					.value();
 
 
-				console.log("TASK", _.map(task_content, 'stime'));
-				console.log("TASK", _.map(task_content, 'identifier'));
-				console.log("UNIQ", _.map(uniq_tasks, 'stime'));
-				console.log("UNIQ", _.map(uniq_tasks, '@id'));
+				// console.log("TASK", _.map(task_content, 'stime'));
+				// console.log("TASK", _.map(task_content, 'identifier'));
+				// console.log("UNIQ", _.map(uniq_tasks, 'stime'));
+				// console.log("UNIQ", _.map(uniq_tasks, 'identifier'));
 				// console.log("TASK CONTENT", task_content);
 				// console.log("RRRRRR", res);
 				return Promise.map(_.values(uniq_tasks), (task) => {
@@ -355,13 +355,16 @@ class Taskrunner extends Abstract {
 				});
 			})
 			.then((res) => {
-				return Promise.mapSeries(task_content, task => {
-					return uniq_tasks[task['@id']] ? this.runTask(task) : Promise.resolve(true);
+				// console.log("RESCHE RES", res, _.values(task_content));
+				return Promise.mapSeries(_.values(task_content), (task) => {
+					// console.log(uniq_tasks[task['@id']]);
+					return Promise.resolve(uniq_tasks[task['@id']] ? this.runTask(task) : true);
 				})
 
 			})
 			.then((res) => {
-				return Promise.map(res, (task_result, key) => {
+				// console.log("GOTTASKS", res);
+				return Promise.map(_.values(res), (task_result, key) => {
 					let task = _.cloneDeep(task_content[key]);
 					task.completed = task_result;
 					return this.completeTask({
@@ -391,7 +394,7 @@ class Taskrunner extends Abstract {
 	}
 
 	getTasks() {
-		console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
+		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
 		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		let cached;
@@ -535,8 +538,8 @@ class Taskrunner extends Abstract {
 				let next_mark = (_.parseInt(_.now() / this.interval) + 1) * this.interval;
 				this.t_interval = (last || next_mark) - _.now();
 				// this.from = this.to;
-				console.log(_.map(tasks, 'identifier'));
-				console.log("NEXT", last, next_mark, this.t_interval);
+				// console.log(_.map(tasks, 'identifier'));
+				// console.log("NEXT", last, next_mark, this.t_interval);
 				clearTimeout(this.timer);
 				this.timer = setTimeout(() => {
 					this.runTasks();
