@@ -110,7 +110,8 @@ class Taskrunner extends Abstract {
 		// console.log("-----------------------------------------");
 		// console.log("COMPLETED TASK", result, existent, task);
 		// console.log("-----------------------------------------");
-		inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
+		if (existent)
+			inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
 
