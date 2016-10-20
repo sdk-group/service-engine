@@ -174,7 +174,7 @@ class Taskrunner extends Abstract {
 		let cached = inmemory_cache.get(lookup_key);
 		return cached && Promise.resolve(cached) || this._db.getNodes(lookup_key)
 			.then((res) => {
-				let r = _.get(res, `${lookup_key}.value.content`, false);
+				let r = (res && res[lookup_key] && res[lookup_key].value && res[lookup_key].value.content || false);
 				r && inmemory_cache.set(lookup_key, r, this.task_expiration + task.stime / 1000);
 				return r;
 			});
