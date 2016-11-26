@@ -6,6 +6,11 @@ let path = require("path");
 let Couchbird = require("Couchbird");
 let db = Couchbird();
 
+function compareNumbers(a, b) {
+	return a - b;
+}
+
+
 class Taskrunner extends Abstract {
 	constructor() {
 		super({
@@ -21,8 +26,8 @@ class Taskrunner extends Abstract {
 		this.ahead_delta = params.ahead_delta || 1000;
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
-		this.task_class = _.upperFirst(_.camelCase(this.key));
-		this.task_expiration = _.parseInt(params.task_expiration) || 86400;
+		this.task_class = "Task"; //_.upperFirst(_.camelCase(this.key));
+		this.task_expiration = _.parseInt(params.task_expiration) || this.interval / 1000 * 5;
 		this.from = _.parseInt(moment()
 			.startOf('day')
 			.format('x'));
@@ -85,7 +90,7 @@ class Taskrunner extends Abstract {
 				opts[task['@id']] = {
 					expiry: this.task_expiration + task.stime / 1000
 				};
-				// console.log("STORING", task, cnt_key);
+				console.log("STORING", task['@id']);
 				inmemory_cache.set(task['@id'], task, this.task_expiration + task.stime / 1000);
 				return this._db.insertNodes(task, opts);
 			})
@@ -111,7 +116,7 @@ class Taskrunner extends Abstract {
 		// console.log("COMPLETED TASK", result, existent, task);
 		// console.log("-----------------------------------------");
 		if (existent)
-			inmemory_cache.get(task['@id']) && inmemory_cache.del(task['@id']);
+			inmemory_cache.get(task['@id']) && inmemory_cache.set(task['@id'], -1, this.task_expiration);
 		return this.remove_on_completion ? (existent ? this._db.remove(task['@id']) : Promise.resolve(true)) : this.storeTask(task);
 	}
 
@@ -330,7 +335,7 @@ class Taskrunner extends Abstract {
 		return this.getTasks()
 			.then((tasks) => {
 				// console.log("RUNNING TASKS", tasks);
-				// console.log("RUNNING TASKS", _.map(tasks, '@id'));
+				console.log("RUNNING TASKS", _.map(tasks, '@id'));
 				task_content = _(tasks)
 					.filter((task) => {
 						return (task.stime < to && !task.completed);
@@ -398,25 +403,32 @@ class Taskrunner extends Abstract {
 
 	getTasks() {
 		// console.log("FROM", this.from, "TO", this.to, "NOW", _.now());
-		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 2);
+		let intervals = _.range(_.parseInt(this.from / this.interval) - 1, _.parseInt(_.now() / this.interval) + 1);
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		let cached;
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
-				let keys = [];
-				_(counters)
-					.map((res, cnt_key) => {
-						if (!res) return;
-						let nums = res.value + 1;
-						let key = _(cnt_key)
-							.split('-')
-							.slice(1)
-							.join('-');
-						keys = _.concat(keys, _.map(_.range(nums), (num) => `${key}-${num}`));
-					})
-					.value();
+				let keys = [],
+					ck = Object.keys(counters),
+					l = ck.length,
+					c_key, c_val, key;
+				while (l--) {
+					c_key = ck[l];
+					c_val = counters[c_key];
+					if (!c_val) continue;
+					c_val = c_val.value + 1;
+					key = _(c_key)
+						.split('-')
+						.slice(1)
+						.join('-');
+					while (c_val--) {
+						keys.push(`${key}-${c_val}`);
+					}
+				}
 				cached = inmemory_cache.mget(keys);
+				// return cached;
 				let missing = _.filter(keys, key => _.isUndefined(cached[key]));
+				console.log("MISSING------------------------>>>>>>>>>", missing.length, "/", keys.length);
 				return this._db.getNodes(missing);
 			})
 			.then((tasks) => {
@@ -446,18 +458,23 @@ class Taskrunner extends Abstract {
 		let cnt_keys = _.map(intervals, k => `counter-${this.key}-${k}`);
 		return this._db.getNodes(cnt_keys)
 			.then(counters => {
-				let keys = [];
-				_(counters)
-					.map((res, cnt_key) => {
-						if (!res) return;
-						let nums = res.value + 1;
-						let key = _(cnt_key)
-							.split('-')
-							.slice(1)
-							.join('-');
-						keys = _.concat(keys, _.map(_.range(nums), (num) => `${key}-${num}`));
-					})
-					.value();
+				let keys = [],
+					ck = Object.keys(counters),
+					l = ck.length,
+					c_key, c_val, key;
+				while (l--) {
+					c_key = ck[l];
+					c_val = counters[c_key];
+					if (!c_val) continue;
+					c_val = c_val.value + 1;
+					key = _(c_key)
+						.split('-')
+						.slice(1)
+						.join('-');
+					while (c_val--) {
+						keys.push(`${key}-${c_val}`);
+					}
+				}
 				let chunked = _.chunk(keys, this.max_parallel_queries);
 
 				return Promise.mapSeries(chunked, (ks) => {
