@@ -27,7 +27,7 @@ class Taskrunner extends Abstract {
 		this.immediate_delta = params.immediate_delta || 500;
 		this.remove_on_completion = params.remove_on_completion || true;
 		this.task_class = "Task"; //_.upperFirst(_.camelCase(this.key));
-		this.task_expiration = _.parseInt(params.task_expiration) || this.interval / 1000 * 5;
+		this.task_expiration = _.parseInt(params.task_expiration) || 60 * 60 * 6;
 		this.from = _.parseInt(moment()
 			.startOf('day')
 			.format('x'));
@@ -130,7 +130,7 @@ class Taskrunner extends Abstract {
 				// console.log("_____________________________________________________");
 				// console.log("PREV TASK", prev_task, task);
 				if (prev_task) {
-					inmemory_cache.get(prev_task['@id']) && inmemory_cache.del(prev_task['@id']);
+					inmemory_cache.get(prev_task['@id']) && inmemory_cache.set(prev_task['@id'], -1, this.task_expiration);
 					return this._db.remove(prev_task['@id']);
 				}
 				return !prev_task;
@@ -148,7 +148,7 @@ class Taskrunner extends Abstract {
 				// console.log("CANCEL TASK", task, tsk);
 				if (!tsk)
 					return false;
-				inmemory_cache.get(tsk) && inmemory_cache.del(tsk);
+				inmemory_cache.get(tsk) && inmemory_cache.set(tsk, -1, this.task_expiration);
 				inmemory_cache.get(lookup_key) && inmemory_cache.del(lookup_key);
 				return this._db.removeNodes([tsk, lookup_key]);
 			})
@@ -428,6 +428,7 @@ class Taskrunner extends Abstract {
 				cached = inmemory_cache.mget(keys);
 				// return cached;
 				let missing = _.filter(keys, key => _.isUndefined(cached[key]));
+				console.log(keys);
 				console.log("MISSING------------------------>>>>>>>>>", missing.length, "/", keys.length);
 				return this._db.getNodes(missing);
 			})
@@ -438,7 +439,7 @@ class Taskrunner extends Abstract {
 					.map('value')
 					.compact()
 					.map(v => inmemory_cache.set(v['@id'], v, this.task_expiration + v.stime / 1000))
-					.concat(_.values(cached))
+					.concat(_.filter(_.values(cached), t => t != -1))
 					.sortBy('stime')
 					.value();
 			});
