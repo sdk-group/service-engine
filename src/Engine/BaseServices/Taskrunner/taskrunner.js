@@ -428,17 +428,19 @@ class Taskrunner extends Abstract {
 				cached = inmemory_cache.mget(keys);
 				// return cached;
 				let missing = _.filter(keys, key => _.isUndefined(cached[key]));
-				console.log(keys);
+				console.log(keys, missing);
 				console.log("MISSING------------------------>>>>>>>>>", missing.length, "/", keys.length);
 				return this._db.getNodes(missing);
 			})
 			.then((tasks) => {
 				return _(tasks)
-					.values()
-					.compact()
-					.map('value')
-					.compact()
-					.map(v => inmemory_cache.set(v['@id'], v, this.task_expiration + v.stime / 1000))
+					.filter((tsk, tsk_key) => {
+						let v = tsk && tsk.value;
+						(v) ?
+						inmemory_cache.set(tsk_key, v, this.task_expiration + v.stime / 1000):
+							inmemory_cache.set(tsk_key, -1, this.task_expiration);
+						return !!v;
+					})
 					.concat(_.filter(_.values(cached), t => t != -1))
 					.sortBy('stime')
 					.value();
