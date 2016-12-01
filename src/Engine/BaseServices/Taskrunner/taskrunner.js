@@ -90,7 +90,7 @@ class Taskrunner extends Abstract {
 				opts[task['@id']] = {
 					expiry: this.task_expiration + task.stime / 1000
 				};
-				console.log("STORING", task['@id']);
+				// console.log("STORING", task['@id']);
 				inmemory_cache.set(task['@id'], task, this.task_expiration + task.stime / 1000);
 				return this._db.insertNodes(task, opts);
 			})
@@ -129,7 +129,7 @@ class Taskrunner extends Abstract {
 			.then((prev_task) => {
 				// console.log("_____________________________________________________");
 				// console.log("PREV TASK", prev_task, task);
-				if (prev_task) {
+				if (prev_task && prev_task != -1) {
 					inmemory_cache.get(prev_task['@id']) && inmemory_cache.set(prev_task['@id'], -1, this.task_expiration);
 					return this._db.remove(prev_task['@id']);
 				}
@@ -428,8 +428,8 @@ class Taskrunner extends Abstract {
 				cached = inmemory_cache.mget(keys);
 				// return cached;
 				let missing = _.filter(keys, key => _.isUndefined(cached[key]));
-				console.log(keys, missing);
-				console.log("MISSING------------------------>>>>>>>>>", missing.length, "/", keys.length);
+				// console.log(keys, missing);
+				// console.log("MISSING------------------------>>>>>>>>>", missing.length, "/", keys.length);
 				return this._db.getNodes(missing);
 			})
 			.then((tasks) => {
