@@ -10,6 +10,7 @@ function compareNumbers(a, b) {
 	return a - b;
 }
 
+let running_tasks = new Set();
 
 class Taskrunner extends Abstract {
 	constructor() {
@@ -292,12 +293,15 @@ class Taskrunner extends Abstract {
 	}
 
 	runTask({
+		"@id": task_id,
 		module_name,
 		task_name,
 		task_type,
 		params
 	}) {
-		// console.log("RUNTASK", module_name, task_name, task_type, params);
+		console.log("RUNTASK", task_id, module_name, task_name, task_type, params);
+		if (running_tasks.has(task_id))
+			return Promise.resolve(false);
 		let opts = _.cloneDeep(params);
 		opts.ts_now = _.now();
 		switch (task_type) {
@@ -310,11 +314,14 @@ class Taskrunner extends Abstract {
 			return Promise.resolve(true);
 			break;
 		case 'add-task':
+			running_tasks.add(task_id);
 			return this.emitter.addTask(module_name, opts)
 				.then((res) => {
+					running_tasks.delete(task_id);
 					return true;
 				})
 				.catch((err) => {
+					running_tasks.delete(task_id);
 					console.log("TASK ERRORED", (module_name || task_name), err.stack);
 					return false;
 				});
